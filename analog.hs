@@ -14,7 +14,9 @@ main = do
  args <- getArgs
  if null args
    then putStrLn "Usage: runghc analog <delay> < /path/to/framework.log"
-   else interact $ unlines . linesWithDelayGreaterThan 2 . filter lineHasTime . lines
+   else do
+     let delay = read $ head args 
+     interact $ unlines . linesWithDelayGreaterThan delay . filter lineHasTime . lines
 
 lineHasTime :: Line -> Bool
 lineHasTime = isPrefixOf "["
