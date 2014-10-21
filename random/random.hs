@@ -11,5 +11,5 @@ main = do
   print rn
   putStrLn "Random Int (range not specified):"
   print (fst $ random (mkStdGen 1) :: Int)
-  putStrLn "Random Bool"  
+  putStrLn "Random Bool"
   print (fst $ random (mkStdGen 1) :: Bool)
