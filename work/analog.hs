@@ -7,6 +7,7 @@ import Data.List (isPrefixOf)
 import Data.Time (NominalDiffTime, UTCTime)
 import Data.Time.Format (readTime)
 import Data.Time.Clock (diffUTCTime)
+import Data.Function (on)
 
 type Line = String
 
@@ -16,22 +17,24 @@ main = do
    then putStrLn "Usage: runghc analog <delay> < /path/to/framework.log"
    else do
      let delay = read $ head args 
-     interact $ unlines . linesWithDelayGreaterThan delay . filter lineHasTime . lines
+     interact $ unlines . linesWithDelayGreaterThan delay . addDelays . filter lineHasTime . lines
 
 lineHasTime :: Line -> Bool
 lineHasTime = isPrefixOf "["
 
-linesWithDelayGreaterThan :: Int -> [Line] -> [Line]
-linesWithDelayGreaterThan minDelay (l1:l2:rest) 
-  | l2 `timeDiff` l1 > fromIntegral minDelay = ("delay " ++ show (l2 `timeDiff` l1) ++ ": " ++ l1) : linesWithDelayGreaterThan minDelay (l2:rest) 
-  | otherwise                                = linesWithDelayGreaterThan minDelay (l2:rest)
-linesWithDelayGreaterThan _  _               = []
+linesWithDelayGreaterThan :: Int -> [(NominalDiffTime, Line)] -> [Line]
+linesWithDelayGreaterThan minDelay = 
+  map (\(d,l)-> "delay " ++ show d ++ ": " ++ l) 
+  . filter (\(d,l) -> d > fromIntegral minDelay)
 
-timeDiff :: Line -> Line -> NominalDiffTime
-timeDiff line1 line2 = diffUTCTime (extractTime line1) (extractTime line2)
+addDelays :: [Line] -> [(NominalDiffTime, Line)]
+addDelays = twoMap (\l1 l2 -> ((diffUTCTime `on` extractTime) l2 l1, l1))
+
+-- Walks through the list applying f between consecutive pairs of elements.
+-- In our case to compute time difference of concesutive lines.
+twoMap :: (a -> a -> b) -> [a] -> [b]
+twoMap f xs = zipWith f xs (tail xs)
 
 extractTime :: Line -> UTCTime
-extractTime = readHMS . take 8 . drop 10
-
-readHMS :: String -> UTCTime
-readHMS = readTime defaultTimeLocale "%H:%M:%S"
+extractTime = parseTime . take 8 . drop 10
+  where parseTime = readTime defaultTimeLocale "%H:%M:%S"
