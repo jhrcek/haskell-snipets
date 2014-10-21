@@ -35,6 +35,7 @@ addDelays = twoMap (\l1 l2 -> ((diffUTCTime `on` extractTime) l2 l1, l1))
 twoMap :: (a -> a -> b) -> [a] -> [b]
 twoMap f xs = zipWith f xs (tail xs)
 
+-- Line with time has the form of "[14-10-20 08:21:59,812] DEBUG..."
 extractTime :: Line -> UTCTime
-extractTime = parseTime . take 8 . drop 10
-  where parseTime = readTime defaultTimeLocale "%H:%M:%S"
+extractTime = parseTime . take 12 . drop 10
+  where parseTime = readTime defaultTimeLocale "%H:%M:%S,%q" . (++ "000000000") --apend 9 zeroes & parse as nanoseconds 
