@@ -28,12 +28,15 @@ solve :: (Floating a, Ord a) => QE a -> QESol a
 solve (QE a b c) = sol det
   where
     sol d | d < 0     = NoSol
-          | d == 0    = SingleSol (-b / ( 2 * a))
+          | d == 0    = SingleSol (-b / (2 * a))
           | otherwise = TwoSols ((-b + sqrt det) / (2 * a)) ((-b - sqrt det) / (2 * a))
     det = b*b - 4*a*c
 
 eval :: Num a => QE a -> a -> a
 eval (QE a b c) x = a*x^2 + b*x + c
+
+vertex :: Fractional t => QE t -> (t, t)
+vertex qe@(QE a b c) = let x = -b / (2*a) in (x, eval qe x)
 
 {-- example HUnit tests --}
 
