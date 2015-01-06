@@ -1,8 +1,9 @@
 -- Utility script for parsing UI test's framework.log and looking for log lines 
 -- that are followed by too large a delay.
--- Usage: runghc analog < /path/to/framework.log
+-- Usage: runghc analog <delay-in-seconds> </path/to/framework.log>
 import System.Locale (defaultTimeLocale)
 import System.Environment (getArgs)
+import Data.Char (isDigit)
 import Data.List (isPrefixOf)
 import Data.Time (NominalDiffTime, UTCTime)
 import Data.Time.Format (readTime)
@@ -13,11 +14,14 @@ type Line = String
 
 main = do
  args <- getArgs
- if null args
-   then putStrLn "Usage: runghc analog <delay> < /path/to/framework.log"
-   else do
-     let delay = read $ head args 
-     interact $ unlines . linesWithDelayGreaterThan delay . addDelays . filter lineHasTime . lines
+ case args of
+   [delay, logfile] | all isDigit delay -> analyzeLog (read delay) logfile
+   _                                    -> putStrLn "Usage: analog <delay-in-seconds> </path/to/framework.log>"
+
+analyzeLog :: Int -> FilePath -> IO ()
+analyzeLog delay logfile = do
+     logtext <- readFile logfile
+     putStrLn $ unlines . linesWithDelayGreaterThan delay . addDelays . filter lineHasTime . lines $ logtext
 
 lineHasTime :: Line -> Bool
 lineHasTime = isPrefixOf "["
