@@ -12,6 +12,7 @@ import Data.Function (on)
 
 type Line = String
 
+main :: IO ()
 main = do
  args <- getArgs
  case args of
@@ -29,7 +30,7 @@ lineHasTime = isPrefixOf "["
 linesWithDelayGreaterThan :: Int -> [(NominalDiffTime, Line)] -> [Line]
 linesWithDelayGreaterThan minDelay = 
   map (\(d,l)-> "delay " ++ show d ++ ": " ++ l) 
-  . filter (\(d,l) -> d > fromIntegral minDelay)
+  . filter (\(d,_) -> d > fromIntegral minDelay)
 
 addDelays :: [Line] -> [(NominalDiffTime, Line)]
 addDelays = twoMap (\l1 l2 -> ((diffUTCTime `on` extractTime) l2 l1, l1))
