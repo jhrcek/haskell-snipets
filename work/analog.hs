@@ -41,6 +41,8 @@ twoMap :: (a -> a -> b) -> [a] -> [b]
 twoMap f xs = zipWith f xs (tail xs)
 
 -- Line with time has the form of "[14-10-20 08:21:59,812] DEBUG..."
+-- Need to parse the whole date for cases that log includes midnight
 extractTime :: Line -> UTCTime
-extractTime = parseTime . take 12 . drop 10
-  where parseTime = readTime defaultTimeLocale "%H:%M:%S,%q" . (++ "000000000") --apend 9 zeroes & parse as nanoseconds 
+extractTime = readTime defaultTimeLocale "%y-%m-%d %H:%M:%S,%q"
+     . (++ "000000000") --apend 9 zeroes & parse as nanoseconds
+     . take 21 . tail --extract part between '[' ']'
