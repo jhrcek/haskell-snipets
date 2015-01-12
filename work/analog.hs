@@ -22,23 +22,21 @@ main = do
 analyzeLog :: Int -> FilePath -> IO ()
 analyzeLog delay logfile = do
      logtext <- readFile logfile
-     putStrLn $ unlines . linesWithDelayGreaterThan delay . addDelays . filter lineHasTime . lines $ logtext
+     putStrLn $ unlines . linesWithDelayGreaterThan delay . calculateDelays . filter hasTime . lines $ logtext
 
-lineHasTime :: Line -> Bool
-lineHasTime = isPrefixOf "["
+hasTime :: Line -> Bool
+hasTime = isPrefixOf "["
 
 linesWithDelayGreaterThan :: Int -> [(NominalDiffTime, Line)] -> [Line]
 linesWithDelayGreaterThan minDelay = 
   map (\(d,l)-> "delay " ++ show d ++ ": " ++ l) 
   . filter (\(d,_) -> d > fromIntegral minDelay)
 
-addDelays :: [Line] -> [(NominalDiffTime, Line)]
-addDelays = twoMap (\l1 l2 -> ((diffUTCTime `on` extractTime) l2 l1, l1))
-
--- Walks through the list applying f between consecutive pairs of elements.
--- In our case to compute time difference of concesutive lines.
-twoMap :: (a -> a -> b) -> [a] -> [b]
-twoMap f xs = zipWith f xs (tail xs)
+-- For each line in the list calculates time it took for the following line to appear
+calculateDelays :: [Line] -> [(NominalDiffTime, Line)]
+calculateDelays ls = scanr getDiff seed ls
+  where getDiff l1 (_, l2) = ((diffUTCTime `on` extractTime) l2 l1, l1)
+        seed = (0 :: NominalDiffTime, head ls) --head ls = arbitrary line as a seed to start scanr
 
 -- Line with time has the form of "[14-10-20 08:21:59,812] DEBUG..."
 -- Need to parse the whole date for cases that log includes midnight
