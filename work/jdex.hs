@@ -1,6 +1,7 @@
 {-- Tool to extract info about Java constructs (i.e. Classes, Interface, Annotations and Enums) from Javadoc --}
-import Control.Arrow ((&&&), (>>^), (>>>))
-import Data.Char (isAlpha, isUpper)
+import Control.Arrow ((&&&), (>>>))
+import Control.Monad (void)
+import Data.Char (isAlpha, isUpper, toUpper)
 import Data.Function (on)
 import Data.List (isPrefixOf, sort, groupBy)
 import System.Environment (getArgs)
@@ -9,74 +10,76 @@ import Text.HandsomeSoup (css)
 import Text.Printf (printf)
 import Text.XML.HXT.Core (readDocument, withParseHTML, withWarnings, getText, runX, ArrowXml, XmlTree, getAttrValue, (//>), (>>.), IOStateArrow)
 import Text.XML.HXT.XPath.Arrows (getXPathTrees)
+-----
+import Test.HUnit
 
 main :: IO ()
 main = do
     args <- getArgs
     case args of
-        [] -> putStrLn "usage: jdex <path-to-javadoc-root-rootJavadocDir>"
+        [] -> putStrLn "usage: jdex <path-to-javadoc-root-dir>"
         (rootJavadocDir:_) -> analyze rootJavadocDir
 
 analyze :: FilePath -> IO ()
-analyze rootJavadocDir = do
-    entries <- sort `fmap` processIndex rootJavadocDir
---    putStrLn "----- All items from index -----" >> mapM_ print entries
+analyze javadocRootDir = do
+    entries <- sort `fmap` processIndex javadocRootDir
+    putStrLn "----- All items from index -----" >> mapM_ print entries
     putStrLn "----- Index Summary -----"
     print $ summarizeIndex entries
     putStrLn "---- TODO -----"
-    mapM_ (processJavadoc rootJavadocDir) entries
+    mapM_ (processJavadoc javadocRootDir) $ filter isClass entries
 
 -- | Info extractable from javadoc html link, that points to a Java construct javadoc html file.
 -- The meaning of items is: (construct, path relative to html file relative to javadoc root dir, True when it's link within local filesystem, False otherwise)
-type Link = (String, FilePath, Bool)
+data Link = Link
+    { lConstruct :: Construct -- the construct this link points to
+    , lFile :: FilePath       -- file path this link points to
+    , lIsLocal :: Bool        -- True if this links shows path in local filesystem, False otherwise (i.e. points to some http://)
+    } deriving (Show, Eq, Ord)
+
+data Construct = Class | Interface | Annotation | Enum deriving (Show, Read, Eq, Ord)
 
 isClass, isInterface, isAnnotation, isEnum :: Link -> Bool
-isClass      = fsteq "class"
-isInterface  = fsteq "interface"
-isAnnotation = fsteq "annotation"
-isEnum       = fsteq "enum"
-
-fsteq :: Eq a => a -> (a, b, c) -> Bool
-fsteq x (a, _, _) = a == x
+isClass      = (Class ==)      . lConstruct
+isInterface  = (Interface ==)  . lConstruct 
+isAnnotation = (Annotation ==) . lConstruct
+isEnum       = (Enum ==)       . lConstruct 
 
 getIndexFile :: FilePath -> FilePath
 getIndexFile rootJavadocDir = rootJavadocDir </> "allclasses-noframe.html"
 
 processIndex :: FilePath -> IO [Link]
-processIndex rootJavadocDir = do
-    let parsedIndex = parseHtmlFile $ getIndexFile rootJavadocDir
+processIndex javadocRootDir = do
+    let parsedIndex = parseHtmlFile $ getIndexFile javadocRootDir
     runX $ parsedIndex >>> getLinks
 
 -- Arrow to extract class/interface/enum/annotation info from javadoc index file's "a" elements:
 -- e.g: <a title="class in com.google.gwt.core.ext" href="path/to/javadoc/file.html" ... will be mapped to ("class", "path/to/javadoc/file.html", True)
 getLinks :: ArrowXml a =>  a XmlTree Link
-getLinks = css "a" >>> ((getAttrValue "title" >>^ extractConstruct) &&& getAttrValue "href") >>. map addLocalityInfo
+getLinks = css "a" >>> (getAttrValue "title" &&& getAttrValue "href") >>. map parseTitleAndHref
   where 
-    extractConstruct :: String -> String
-    extractConstruct title = takeWhile (/=' ') title
+    parseTitleAndHref :: (String, String) -> Link
+    parseTitleAndHref (title, href) = Link (extractConstruct title) href (not $ "http" `isPrefixOf` href)
 
-    addLocalityInfo :: (String, FilePath) -> (String, FilePath, Bool) -- add True/False representing whether href is in local filesystem or http
-    addLocalityInfo (construct, href) = (construct, href, not $ "http" `isPrefixOf` href)
+    extractConstruct :: String -> Construct
+    extractConstruct title = read . (\x -> toUpper (head x) : tail x) $ takeWhile (/=' ') title
 
-summarizeIndex :: [Link] -> [(String, Int)] -- how many pieces of each construct (class, interface, annotation, enum) does the list contain?
-summarizeIndex = map ((fst3 . head) &&& length) . groupBy ((==) `on` fst3) . sort
-  where fst3 (x,_,_) = x
+summarizeIndex :: [Link] -> [(Construct, Int)] -- how many pieces of each construct (class, interface, annotation, enum) does the list contain?
+summarizeIndex = map ((lConstruct . head) &&& length) . groupBy ((==) `on` lConstruct) . sort
 
-data DocumentedItem = Interface | Class | Enum | Annotation 
-           
 processJavadoc :: FilePath -> Link -> IO ()
-processJavadoc jdRoot (construct, file, isLocal) = do
+processJavadoc jdRoot (Link construct file isLocal) = do
     let jdFile = jdRoot </> file
         doc = parseHtmlFile jdFile
-    putStrLn $ printf "%s %s (%s)" construct (jdFileToFQCN file) jdFile
-    subsectionHeadings <- runX $ doc >>> (getXPathTrees subsectionHeadingXP //> getText)
+    putStrLn $ printf "%s %s (%s)" (show construct) (jdFileToFQCN file) jdFile
+    subsectionHeadings <- runX $ doc >>> (getXPathTrees directKnownSublcasses //> getText)
     mapM_ putStrLn subsectionHeadings
   where
     --subsectionHeadingXP = "//div[@class='description']//dt" -- new
     subsectionHeadingXP = "//h2/following-sibling::dl/dt/b" --odler javadoc versions TODO -find out which
   --linksUnderSubsection heading = subsectionHeadingXP ++ "[contains(text(),'" ++ heading ++ "')]/following-sibling::dd/a"
     linksUnderSubsection heading = subsectionHeadingXP ++ "[contains(text(),'" ++ heading ++"')]/../../dd/a" --older version of javadoc
-    allImplementingClasses = linksUnderSubsection "All Known Implementing Classes"
+    directKnownSublcasses = linksUnderSubsection "Direct Known Subclasses"
 
 -- For each construct contains the list of all subsecion headings that can appear in its javadoc
 construct2JDSections :: [(String, [String])]
@@ -90,9 +93,12 @@ construct2JDSections = [
 parseHtmlFile :: FilePath -> IOStateArrow s b XmlTree
 parseHtmlFile = readDocument [withParseHTML True, withWarnings False]
 
-jdFileToFQCN :: FilePath -> String -- Extract fully qualified class (like "java.lang.String") from javadoc link
+jdFileToFQCN :: FilePath -> String -- Extract fully qualified class name (like "java.lang.String") from javadoc link
 jdFileToFQCN file = take (length noDots - 5) {- drop ".html" -} . replace '/' '.' $ noDots
     where noDots = dropWhile (not . isAlpha) file
+
+fqcnToJdFile :: String -> FilePath -- Convert fully qualified class name to its corresponding javadoc html file
+fqcnToJdFile = (++ ".html") . replace '.' '/'
 
 jdFileToSCN :: FilePath -> String -- Simple ClassName, like "String"
 jdFileToSCN = dropWhile (not . isUpper) . jdFileToFQCN
@@ -101,3 +107,21 @@ replace :: Char -> Char -> String -> String
 replace _ _ [] = []
 replace x y (z:zs) | x == z     = y:replace x y zs
                    | otherwise  = z:replace x y zs
+
+
+---- TESTS ----
+runAllTests :: IO ()
+runAllTests = void $ runTestTT allTests
+
+allTests = TestList 
+    [ testjdFileToFQCN
+    , testfqcnToJdFile
+    ]
+
+testjdFileToFQCN = TestList 
+    [ jdFileToFQCN "org/graphstream/ui/swingViewer/LayerRenderer.html" ~?= "org.graphstream.ui.swingViewer.LayerRenderer"
+    ]
+
+testfqcnToJdFile = TestList
+    [ fqcnToJdFile "java.lang.String" ~?= "java/lang/String.html"
+    ]
