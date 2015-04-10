@@ -1,16 +1,13 @@
 {-- Tool to extract info about Java constructs (i.e. Classes, Interface, Annotations and Enums) from Javadoc --}
-import Control.Arrow ((&&&))
-import Control.Monad (when, mapM_, void)
+import Control.Arrow ((&&&), (>>^), (>>>))
 import Data.Char (isAlpha, isUpper)
 import Data.Function (on)
 import Data.List (isPrefixOf, sort, groupBy)
-import Data.Maybe (fromJust)
-import System.Directory (doesFileExist)
 import System.Environment (getArgs)
 import System.FilePath ((</>))
 import Text.HandsomeSoup (css)
 import Text.Printf (printf)
-import Text.XML.HXT.Core
+import Text.XML.HXT.Core (readDocument, withParseHTML, withWarnings, getText, runX, ArrowXml, XmlTree, getAttrValue, (//>), (>>.), IOStateArrow)
 import Text.XML.HXT.XPath.Arrows (getXPathTrees)
 
 main :: IO ()
@@ -91,7 +88,7 @@ construct2JDSections = [
     ]
 
 parseHtmlFile :: FilePath -> IOStateArrow s b XmlTree
-parseHtmlFile = readDocument [withParseHTML yes, withWarnings no]
+parseHtmlFile = readDocument [withParseHTML True, withWarnings False]
 
 jdFileToFQCN :: FilePath -> String -- Extract fully qualified class (like "java.lang.String") from javadoc link
 jdFileToFQCN file = take (length noDots - 5) {- drop ".html" -} . replace '/' '.' $ noDots
