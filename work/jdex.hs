@@ -101,7 +101,7 @@ fqcnToJdFile :: String -> FilePath -- Convert fully qualified class name to its 
 fqcnToJdFile = (++ ".html") . replace '.' '/'
 
 jdFileToSCN :: FilePath -> String -- Simple ClassName, like "String"
-jdFileToSCN = dropWhile (not . isUpper) . jdFileToFQCN
+jdFileToSCN = reverse . takeWhile (/= '.') . reverse . jdFileToFQCN
 
 replace :: Char -> Char -> String -> String
 replace x y = map (\z -> if z == x then y else z)
@@ -111,14 +111,7 @@ runAllTests :: IO ()
 runAllTests = void $ runTestTT allTests
 
 allTests = TestList 
-    [ testjdFileToFQCN
-    , testfqcnToJdFile
-    ]
-
-testjdFileToFQCN = TestList 
     [ jdFileToFQCN "org/graphstream/ui/swingViewer/LayerRenderer.html" ~?= "org.graphstream.ui.swingViewer.LayerRenderer"
-    ]
-
-testfqcnToJdFile = TestList
-    [ fqcnToJdFile "java.lang.String" ~?= "java/lang/String.html"
+    , jdFileToSCN "org/graphstream/ui/swingViewer/LayerRenderer.html" ~?= "LayerRenderer"
+    , fqcnToJdFile "java.lang.String" ~?= "java/lang/String.html"
     ]
