@@ -104,10 +104,7 @@ jdFileToSCN :: FilePath -> String -- Simple ClassName, like "String"
 jdFileToSCN = dropWhile (not . isUpper) . jdFileToFQCN
 
 replace :: Char -> Char -> String -> String
-replace _ _ [] = []
-replace x y (z:zs) | x == z     = y:replace x y zs
-                   | otherwise  = z:replace x y zs
-
+replace x y = map (\z -> if z == x then y else z)
 
 ---- TESTS ----
 runAllTests :: IO ()
