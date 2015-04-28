@@ -1,6 +1,6 @@
 import Data.Char (isAlpha, isSpace, toLower)
 import Data.Foldable (find)
-import Data.List (sortBy)
+import Data.List (sortBy, groupBy)
 import Data.Ord (comparing)
 import Data.Tree
 import Text.Printf (printf)
@@ -8,7 +8,7 @@ import Text.Printf (printf)
 main :: IO ()
 main = do
     input <- readFile "words.test"
-    let charFreqs = countsToFreqs . buildCharCounts . map (++"$") . words . normalizeInput $ input
+    let charFreqs = countsToFreqs . buildCharCounts2 . map (++"$") . words . normalizeInput $ input
     printForest charFreqs
     loop charFreqs
 
@@ -76,3 +76,21 @@ printForest = putStrLn . drawForest . map (fmap show)
 --leave only letters and spaces and convert all spaces to lowercase
 normalizeInput :: String -> String
 normalizeInput = map toLower . filter (\c -> isAlpha c || isSpace c)
+
+
+-- (maybe ? )  better way to build forest using unfoldForest: The idea is to use unfoldForest, with unfolding function taking
+-- list of words starting with the same letter like ["cat", "cut", "catalogue"] and returns (('c', 3), ["at", "ut", "atalogue"])
+buildCharCounts2 :: [String] -> CharCounts
+buildCharCounts2 = unfoldForest myUnfolder . sortAndGroup
+  where
+    myUnfolder :: [String] -> ((Char, Int), [[String]])
+    myUnfolder ws = ((firstLetter ws, length ws), sortAndGroup . map tail $ ws)
+
+    sortAndGroup :: [String] -> [[String]]
+    sortAndGroup = groupBy firstCharEqual . sortBy (comparing head) . filter (not . null)
+
+    firstLetter :: [String] -> Char
+    firstLetter = head . head
+
+    firstCharEqual :: String -> String -> Bool
+    firstCharEqual (c:_) (d:_) = c == d
