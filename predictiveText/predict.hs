@@ -78,11 +78,11 @@ normalizeInput :: String -> String
 normalizeInput = map toLower . filter (\c -> isAlpha c || isSpace c)
 
 
--- (maybe ? )  better way to build forest using unfoldForest: The idea is to use unfoldForest, with unfolding function taking
--- list of words starting with the same letter like ["cat", "cut", "catalogue"] and returns (('c', 3), ["at", "ut", "atalogue"])
+-- (maybe ? )  better way to build forest using unfoldForest
 buildCharCounts2 :: [String] -> CharCounts
 buildCharCounts2 = unfoldForest myUnfolder . sortAndGroup
   where
+    -- unfolding function takes a list of words starting with the same letter like ["cat", "cut", "catalogue"] and returns (('c', 3), ["at", "ut", "atalogue"])
     myUnfolder :: [String] -> ((Char, Int), [[String]])
     myUnfolder ws = ((firstLetter ws, length ws), sortAndGroup . map tail $ ws)
 
