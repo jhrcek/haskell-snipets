@@ -1,0 +1,5 @@
+*.txt
+*.jar
+
+web-driver/chromedriver
+work/analog
