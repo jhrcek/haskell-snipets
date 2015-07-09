@@ -7,7 +7,7 @@ showDot :: String -> IO ()
 showDot dot = do
     tmpFile <- writeToTempFile dot 
     runCmd $ "dot " ++ tmpFile ++ " -Tpng -o a.png"
-    runCmd "showimage a.png"
+    runCmd "shotwell a.png"
  where runCmd cmdStr = runCommand cmdStr >>= void . waitForProcess 
 
 writeToTempFile :: String -> IO FilePath
