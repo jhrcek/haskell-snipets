@@ -1,10 +1,21 @@
-module Maven (parseModuleStructure, showModuleStructure) where
+module Main where
 
-import Text.XML.HXT.Core (runX, (/>), (//>), readDocument, hasName, getText)
+import Control.Monad (unless)
+import Data.Tree (Tree(Node, rootLabel), unfoldTreeM)
+import System.Directory (doesFileExist)
+import System.Environment (getArgs)
 import System.FilePath ((</>))
-import Data.Tree
+import Text.XML.HXT.Core (runX, (/>), (//>), readDocument, hasName, getText)
 import Text.Printf (printf)
+
 import Showdot
+
+main :: IO ()
+main = do
+   args <- getArgs
+   case args of
+       [] -> putStrLn "usage: mvnProjModules <path to maven project's root dir>"
+       (dir:_) -> showModuleStructure dir
 
 type ArtifactId = String
 type DotSource = String
@@ -22,6 +33,9 @@ parseModuleStructure = unfoldTreeM getModuleNames
 getModuleNames :: FilePath -- ^ Root directory of maven project
                -> IO (ArtifactId, [FilePath]) -- ^ (artifactId, [directories containing pom.xml of submodules])
 getModuleNames dir = do
+    pomExists <- doesFileExist pom
+    unless pomExists (error $ pom ++ " does not exist")
+    -- parse artifact id and modules from given pom
     let doc = readDocument [] pom
     [artifactId] <- runX $ doc /> artifactIdArr
     modules <- runX $ doc //> modulesArr
