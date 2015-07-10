@@ -1,19 +1,21 @@
 module Showdot (showDot) where 
+import System.Directory (removeFile)
 import System.Process (runCommand, waitForProcess)
-import System.IO (openTempFile, hPutStr, hClose)
+import System.IO (hPutStr,IOMode(WriteMode), withFile)
 import Control.Monad (void)
 
 showDot :: String -> IO ()
-showDot dot = do
-    tmpFile <- writeToTempFile dot 
-    runCmd $ "dot " ++ tmpFile ++ " -Tpng -o a.png"
-    runCmd "shotwell a.png"
- where runCmd cmdStr = runCommand cmdStr >>= void . waitForProcess 
+showDot dotStr = do
+    writeToTempFile dotStr
+    generateImage >> displayImage
+    mapM_ removeFile ["tmp.dot", "a.png"]
+ where
+    generateImage = runCmd "dot -Tpng -o a.png tmp.dot"
+    displayImage = runCmd "shotwell a.png"
+    runCmd cmdStr = runCommand cmdStr >>= void . waitForProcess 
 
-writeToTempFile :: String -> IO FilePath
-writeToTempFile str = do
-    (tmpFile, tmpHandle) <- openTempFile "." "dot.tmp"
-    putStrLn $ "Creating temp file " ++ tmpFile
-    hPutStr tmpHandle str
-    hClose tmpHandle
-    return tmpFile
+writeToTempFile :: String -> IO ()
+writeToTempFile content = 
+    withFile "tmp.dot" WriteMode $ \handle ->
+       hPutStr handle content
+
