@@ -1,6 +1,11 @@
 module Main where
 
 import Control.Monad (unless)
+import Data.GraphViz (runGraphvizCanvas', setStrictness)
+import Data.GraphViz.Attributes.Complete (RankDir(FromLeft), Attribute(RankDir))
+import Data.GraphViz.Commands (GraphvizCanvas(Xlib))
+import Data.GraphViz.Types.Generalised (DotGraph)
+import Data.GraphViz.Types.Monadic ((-->), digraph', graphAttrs)
 import Data.Tree (Tree(Node, rootLabel), unfoldTreeM)
 import System.Directory (doesFileExist)
 import System.Environment (getArgs)
@@ -8,7 +13,7 @@ import System.FilePath ((</>))
 import Text.XML.HXT.Core (runX, (/>), (//>), readDocument, hasName, getText)
 import Text.Printf (printf)
 
-import Showdot
+import Showdot (showDot)
 
 main :: IO ()
 main = do
@@ -18,12 +23,12 @@ main = do
        (dir:_) -> showModuleStructure dir
 
 type ArtifactId = String
-type DotSource = String
 
 -- | Display module structure as a graphviz-generated image
 showModuleStructure :: FilePath -> IO ()
 showModuleStructure mvnProjRoot =
-    parseModuleStructure mvnProjRoot >>= showDot . toDotSource
+    parseModuleStructure mvnProjRoot >>= displayTreeGraphviz --alternatively displayTreeShowdot
+
 
 parseModuleStructure :: FilePath -- ^ Root directory of maven project
                      -> IO (Tree ArtifactId) -- ^ Tree representing module dependencies extracted from pom.xml files
@@ -45,12 +50,29 @@ getModuleNames dir = do
     artifactIdArr = hasName "project" /> hasName "artifactId" //> getText
     modulesArr = hasName "modules" /> hasName "module" //> getText
 
--- | Conversion to dot source
-toDotSource :: Tree ArtifactId -> DotSource
+-- | Conversion to dot source -- using graphviz library
+displayTreeGraphviz :: Tree ArtifactId -> IO ()
+displayTreeGraphviz t = runGraphvizCanvas' (renderDotGraph t) Xlib
+
+renderDotGraph :: Tree ArtifactId -> DotGraph String
+renderDotGraph tree = setStrictness True . digraph' $ do
+    graphAttrs [RankDir FromLeft]
+    mapM renderEdge $ treeToEdgeList tree
+  where renderEdge (from, to) = from --> to
+
+-- | Conversion to dot source -- plain strings
+toDotSource :: Tree ArtifactId -> String
 toDotSource = ("strict digraph {\nrankdir=LR\n" ++ ) . (++"}") . unlines . map showEdge . treeToEdgeList
     where showEdge (from, to) = printf "\"%s\" -> \"%s\"" from to
 
+displayTreeShowdot :: Tree ArtifactId -> IO ()
+displayTreeShowdot = showDot . toDotSource
+
+
+-- | Utility
 treeToEdgeList :: Tree a -> [(a,a)]
 treeToEdgeList (Node root subforest) =
     map (\subtree -> (root, rootLabel subtree)) subforest ++
     concatMap treeToEdgeList subforest
+
+
