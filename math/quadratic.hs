@@ -25,12 +25,14 @@ showQE (QE a b c) = fixCorners terms
 data QESol a = NoSol | SingleSol a | TwoSols a a deriving (Show)
 
 solve :: (Floating a, Ord a) => QE a -> QESol a
-solve (QE a b c) = sol det
-  where
-    sol d | d < 0     = NoSol
-          | d == 0    = SingleSol (-b / (2 * a))
-          | otherwise = TwoSols ((-b + sqrt det) / (2 * a)) ((-b - sqrt det) / (2 * a))
-    det = b*b - 4*a*c
+solve qe@(QE a b c) = case d `compare` 0 of
+    LT -> NoSol
+    EQ -> SingleSol (-b / (2 * a))
+    GT -> TwoSols ((-b + sqrt d) / (2 * a)) ((-b - sqrt d) / (2 * a))
+  where d = discriminant qe
+
+discriminant :: Num a => QE a -> a
+discriminant (QE a b c) = b^2 - 4*a*c
 
 eval :: Num a => QE a -> a -> a
 eval (QE a b c) x = a*x^2 + b*x + c
