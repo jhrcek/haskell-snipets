@@ -17,18 +17,13 @@ import Showdot (showDot)
 
 main :: IO ()
 main = do
-   args <- getArgs
-   case args of
-       [] -> putStrLn "usage: mvnProjModules <path to maven project's root dir>"
-       (dir:_) -> showModuleStructure dir
-
+    args <- getArgs
+    case args of
+        [] -> putStrLn "usage: mvnMods <path to maven project's root dir> [gv]"
+        (mvnRootDir:"gv":_) -> parseModuleStructure mvnRootDir >>= displayTreeGraphviz
+        (mvnRootDir:_)      -> parseModuleStructure mvnRootDir >>= displayTreeShowdot
+       
 type ArtifactId = String
-
--- | Display module structure as a graphviz-generated image
-showModuleStructure :: FilePath -> IO ()
-showModuleStructure mvnProjRoot =
-    parseModuleStructure mvnProjRoot >>= displayTreeGraphviz --alternatively displayTreeShowdot
-
 
 parseModuleStructure :: FilePath -- ^ Root directory of maven project
                      -> IO (Tree ArtifactId) -- ^ Tree representing module dependencies extracted from pom.xml files
@@ -50,7 +45,7 @@ getModuleNames dir = do
     artifactIdArr = hasName "project" /> hasName "artifactId" //> getText
     modulesArr = hasName "modules" /> hasName "module" //> getText
 
--- | Conversion to dot source -- using graphviz library
+-- | Conversion to dot source -- using graphviz library canvas
 displayTreeGraphviz :: Tree ArtifactId -> IO ()
 displayTreeGraphviz t = runGraphvizCanvas' (renderDotGraph t) Xlib
 
@@ -67,7 +62,6 @@ toDotSource = ("strict digraph {\nrankdir=LR\n" ++ ) . (++"}") . unlines . map s
 
 displayTreeShowdot :: Tree ArtifactId -> IO ()
 displayTreeShowdot = showDot . toDotSource
-
 
 -- | Utility
 treeToEdgeList :: Tree a -> [(a,a)]
