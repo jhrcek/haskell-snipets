@@ -2,7 +2,7 @@ import Control.Monad (unless, void)
 import Data.List (isInfixOf)
 import Network.HTTP (getRequest, rspBody, Response)
 import Network.Browser (browse, request, setOutHandler)
-import Network.URI (URI)
+import Network.URI (URI, isURI)
 import System.Exit (ExitCode(ExitSuccess))
 import System.Process (system)
 import Text.XML.HXT.Core (runX, (>>>))
@@ -32,16 +32,18 @@ data SearchResult = NotFound
 
 -- | Search word in dictionary, download the page and extract Pron URL from it
 lookupPronunciation :: String -> IO SearchResult
-lookupPronunciation word = do
-    (rspUrl, rsp) <- getDictionaryPage (searchUrl word)
-    if "spellcheck" `isInfixOf` show rspUrl
-        then return NotFound
-        else do
-            let dictionaryHtmlSrc = rspBody rsp
-            mp3UrlList <- extractPronUrls dictionaryHtmlSrc
-            case mp3UrlList of
-                []         -> return PronNotAvailable
-                (mp3Url:_) -> return $ Found mp3Url
+lookupPronunciation word
+    | isURI (searchUrl word) = do  
+        (rspUrl, rsp) <- getDictionaryPage (searchUrl word)
+        if "spellcheck" `isInfixOf` show rspUrl
+            then return NotFound
+            else do
+                let dictionaryHtmlSrc = rspBody rsp
+                mp3UrlList <- extractPronUrls dictionaryHtmlSrc
+                case mp3UrlList of
+                    []         -> return PronNotAvailable
+                    (mp3Url:_) -> return $ Found mp3Url
+    | otherwise = return NotFound
 
 -- | Submit get request to dictionary url.
 -- Using browse (not simpleHTTP) because Mc Millan dictionary uses redirects
