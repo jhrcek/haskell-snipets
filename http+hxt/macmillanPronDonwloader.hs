@@ -1,10 +1,12 @@
-import Control.Monad (unless)
-import Text.XML.HXT.Core (runX, (>>>))
-import Text.HandsomeSoup (css, parseHtml, (!))
+import Control.Monad (unless, void)
 import Data.List (isInfixOf)
 import Network.HTTP (getRequest, rspBody, Response)
 import Network.Browser (browse, request, setOutHandler)
 import Network.URI (URI)
+import System.Exit (ExitCode(ExitSuccess))
+import System.Process (system)
+import Text.XML.HXT.Core (runX, (>>>))
+import Text.HandsomeSoup (css, parseHtml, (!))
 
 main :: IO ()
 main = searchLoop
@@ -20,7 +22,7 @@ searchLoop = do
             PronNotAvailable -> putStrLn $ "Pronunication not available for " ++ word
             Found url -> do
                 putStrLn url
-                downloadMp3 url
+                downloadMp3 url word >>= maybe (return ()) mplayer
         searchLoop
 
 data SearchResult = NotFound
@@ -56,5 +58,13 @@ extractPronUrls htmlSrc = runX $ parseHtml htmlSrc >>> css ".audio_play_button" 
 searchUrl :: String -> String
 searchUrl word = "http://www.macmillandictionary.com/search/british/direct/?q=" ++ word
 
-downloadMp3 :: String -> IO ()
-downloadMp3 _  = return () --TODO - download+rename usign wget or http get?
+downloadMp3 :: String -> String -> IO (Maybe FilePath)
+downloadMp3 url word  = do
+  exitCode <- system $ "wget --no-verbose " ++ url ++ " --output-document=" ++ mp3
+  return $ if exitCode == ExitSuccess
+    then Just mp3
+    else Nothing
+  where mp3 = word ++ ".mp3"
+
+mplayer :: FilePath -> IO ()
+mplayer mp3File = void . system $ "mplayer " ++ mp3File
