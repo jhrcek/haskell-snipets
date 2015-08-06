@@ -1,26 +1,54 @@
 module FiniteEndo where
 
-import Control.Applicative
-import Data.List (nub)
-import Data.Maybe (fromJust)
+import Control.Monad (zipWithM_, replicateM)
+import Data.List (nub, sort)
+import Data.GraphViz.Types.Monadic
+import Data.GraphViz
 
--- Endomorphisms on finite domain [1..n] represented as list
-type FEndo = [(Int, Int)]
+-- Endomorphisms on finite set [1..n] represented as list
+-- e.g. [1,3,2] represents endo e, such that e(1) = 1, e(2) = 3 and e(3) = 2
+type FEndo = [Int]
 
 generateAll :: Int -> [FEndo]
-generateAll n = mapM (possibleMappings n) [1..n]
-  where
-    --all possible ways that x can be mapped to [1..n]
-    possibleMappings n x = (,) <$> [x] <*> [1..n]
+generateAll n = replicateM n [1..n]
 
-range :: FEndo -> [Int]
-range = nub . map snd
+domain :: FEndo -> [Int]
+domain e = [1 .. length e]
 
-isBijective :: FEndo -> Bool
-isBijective e = length e == length (range e)
+codomain :: FEndo -> [Int]
+codomain = sort . nub
 
+isIdentity :: FEndo -> Bool
+isIdentity e = e == domain e
+
+isIsomorphism :: FEndo -> Bool
+isIsomorphism e = length e == length (nub e)
+
+-- f `compose` g is like f . g
 compose :: FEndo -> FEndo -> FEndo
-compose e1 e2 = map (\(a,b) -> (a, fromJust $ lookup b e2)) e1
+f `compose` g = map (\gx -> f !! (gx-1)) g
 
+-- idempotent is endomorphism that when composed with itself results in itself
 isIdempotent :: FEndo -> Bool
 isIdempotent e = e `compose` e == e
+
+-- involution is endomorphism that is its own inverse (https://oeis.org/A000085)
+isInvolution :: FEndo -> Bool
+isInvolution e = isIdentity $ e `compose` e
+
+isRetractionOf :: FEndo -> FEndo -> Bool
+r `isRetractionOf` f = isIdentity $ r `compose` f
+
+isSectionOf :: FEndo -> FEndo -> Bool
+s `isSectionOf` f = isIdentity $ f `compose` s
+
+eval :: FEndo -> Int -> Int --TODO should return Maybe?
+eval e x = e !! (x+1)
+
+-- Endo visualization using graphviz
+display :: FEndo -> IO ()
+display e  = runGraphvizCanvas' gr Xlib
+  where gr = digraph' $ renderEdges e
+
+renderEdges :: FEndo -> Dot Int
+renderEdges e = zipWithM_ (-->) (domain e) e
