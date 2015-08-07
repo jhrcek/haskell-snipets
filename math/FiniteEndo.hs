@@ -6,7 +6,7 @@ import Data.List (nub, sort)
 import Data.GraphViz (runGraphvizCanvas)
 import Data.GraphViz.Attributes.Complete (Attribute(FixedSize, Height, Width), NodeSize(SetNodeSize))
 import Data.GraphViz.Commands (GraphvizCanvas(Xlib), GraphvizCommand(Neato))
-import Data.GraphViz.Types.Monadic
+import Data.GraphViz.Types.Monadic ((-->), digraph', nodeAttrs, Dot)
 import Data.GraphViz.Types (printDotGraph)
 import Data.GraphViz.Types.Generalised (DotGraph)
 import Data.Text.Lazy (unpack)
