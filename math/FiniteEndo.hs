@@ -2,8 +2,14 @@ module FiniteEndo where
 
 import Control.Monad (zipWithM_, replicateM)
 import Data.List (nub, sort)
+-- TODO move endo visualization stuff to separate module
+import Data.GraphViz (runGraphvizCanvas)
+import Data.GraphViz.Attributes.Complete (Attribute(FixedSize, Height, Width), NodeSize(SetNodeSize))
+import Data.GraphViz.Commands (GraphvizCanvas(Xlib), GraphvizCommand(Neato))
 import Data.GraphViz.Types.Monadic
-import Data.GraphViz
+import Data.GraphViz.Types (printDotGraph)
+import Data.GraphViz.Types.Generalised (DotGraph)
+import Data.Text.Lazy (unpack)
 
 -- Endomorphisms on finite set [1..n] represented as list
 -- e.g. [1,3,2] represents endo e, such that e(1) = 1, e(2) = 3 and e(3) = 2
@@ -47,8 +53,14 @@ eval e x = e !! (x+1)
 
 -- Endo visualization using graphviz
 display :: FEndo -> IO ()
-display e  = runGraphvizCanvas' gr Xlib
-  where gr = digraph' $ renderEdges e
+display e = runGraphvizCanvas Neato (renderGraph e) Xlib
 
-renderEdges :: FEndo -> Dot Int
-renderEdges e = zipWithM_ (-->) (domain e) e
+renderGraph :: FEndo -> DotGraph Int
+renderGraph e = digraph' $ nodeAttrs attrs >> renderEdges e
+  where 
+    renderEdges :: FEndo -> Dot Int
+    renderEdges endo = zipWithM_ (-->) (domain endo) endo
+    attrs = [FixedSize SetNodeSize, Width 0.25, Height 0.25]
+
+dotSource :: DotGraph Int -> String
+dotSource = unpack .  printDotGraph
