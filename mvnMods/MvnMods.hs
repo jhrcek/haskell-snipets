@@ -3,7 +3,7 @@ module Main where
 import Control.Monad (unless)
 import Data.GraphViz (runGraphvizCanvas', setStrictness)
 import Data.GraphViz.Attributes.Complete (RankDir(FromLeft), Attribute(RankDir))
-import Data.GraphViz.Commands (GraphvizCanvas(Xlib))
+import Data.GraphViz.Commands (GraphvizCanvas(Xlib), isGraphvizInstalled)
 import Data.GraphViz.Types.Generalised (DotGraph)
 import Data.GraphViz.Types.Monadic ((-->), digraph', graphAttrs)
 import Data.Tree (Tree(Node, rootLabel), unfoldTreeM)
@@ -17,11 +17,16 @@ import Showdot (showDot)
 
 main :: IO ()
 main = do
-    args <- getArgs
-    case args of
-        [] -> putStrLn "usage: mvnMods <path to maven project's root dir> [gv]"
-        (mvnRootDir:"gv":_) -> parseModuleStructure mvnRootDir >>= displayTreeGraphviz
-        (mvnRootDir:_)      -> parseModuleStructure mvnRootDir >>= displayTreeShowdot
+    gvInstalled <- isGraphvizInstalled
+    if gvInstalled
+      then putStrLn "Graphviz not installed. Please install it to proceed (http://www.graphviz.org/)"
+      else getArgs >>= main'
+
+main' :: [String] -> IO ()
+main' args = case args of
+    [] -> putStrLn "usage: mvnMods <path to maven project's root dir> [gv]"
+    (mvnRootDir:"gv":_) -> parseModuleStructure mvnRootDir >>= displayTreeGraphviz
+    (mvnRootDir:_)      -> parseModuleStructure mvnRootDir >>= displayTreeShowdot
        
 type ArtifactId = String
 
