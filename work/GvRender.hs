@@ -1,3 +1,10 @@
+module GvRender (
+  renderGraph,
+  printGraph,
+  displayGraph
+ ) where
+
+import Data.GraphViz.Algorithms (transitiveReduction)
 import Data.GraphViz.Commands (runGraphvizCanvas, GraphvizCanvas(Xlib))
 import Data.GraphViz.Types
 import Data.GraphViz.Types.Monadic
@@ -37,26 +44,35 @@ extendsPairs = renderEdges OpenArrow
 implementsPairs = renderEdges FilledArrow
 
 ------------------- Graph -------------------
---
-renderGraph :: [String] -> [String] -> [(String, String)] -> [(String, String)] -> DotGraph String
-renderGraph clss ifs expairs implpairs = digraph' $ do
-   graphAttrs [RankDir FromBottom]
-   classNodes clss
-   interfaceNodes ifs
-   extendsPairs expairs
-   implementsPairs implpairs
 
-testGraph :: DotGraph String
-testGraph = renderGraph 
-  ["ArrayList", "AbstractList", "AbstractSequentialList", "Object", "AbstractCollection", "LinkedList"]
-  ["List", "Iterable", "Queue"]
-  [("List", "Collection"), ("ArrayList", "AbstractList"), ("AbstractList", "AbstractCollection"), 
-   ("AbstractCollection", "Object"), ("LinkedList", "AbstractSequentialList"), ("AbstractSequentialList", "AbstractList"),
-   ("Queue", "Collection"), ("Collection", "Iterable")]
-  [("ArrayList","List"), ("LinkedList", "Queue"), ("LinkedList", "List"), ("AbstractCollection", "Collection"), ("AbstractList", "List")]
+renderGraph :: [String] -> [String] -> [(String, String)] -> [(String, String)] -> DotGraph String
+renderGraph clss ifs expairs implpairs = removeTransitiveEdges . digraph' $ do
+    graphAttrs [RankDir FromBottom]
+    classNodes clss
+    interfaceNodes ifs
+    extendsPairs expairs
+    implementsPairs implpairs
+  where
+    removeTransitiveEdges = fromCanonical . transitiveReduction
 
 ------------------- Test -------------------
 
-printIt, displayIt :: IO ()
-printIt = putStrLn . unpack . printDotGraph $ testGraph
-displayIt = runGraphvizCanvas Dot testGraph Xlib
+printGraph, displayGraph :: DotGraph String -> IO ()
+printGraph = putStrLn . unpack . printDotGraph
+displayGraph g = runGraphvizCanvas Dot g Xlib
+
+printTest, displayTest :: IO ()
+printTest = printGraph testGraph
+displayTest = displayGraph testGraph
+
+testGraph :: DotGraph String
+testGraph = renderGraph
+  ["ArrayList", "AbstractList", "AbstractSequentialList", "Object", "AbstractCollection", "LinkedList"]
+  ["List", "Iterable", "Queue"]
+  [("List", "Collection"), ("ArrayList", "AbstractList"), ("AbstractList", "AbstractCollection"),
+   ("AbstractCollection", "Object"), ("LinkedList", "AbstractSequentialList"), ("AbstractSequentialList", "AbstractList"),
+   ("Queue", "Collection"), ("Collection", "Iterable")]
+  [("ArrayList","List"), ("LinkedList", "Queue"), ("LinkedList", "List"), ("AbstractCollection", "Collection"), ("AbstractList", "List"),
+   ("ArrayList", "Collection"{-transitive edge to test tr. edge removal-})]
+
+
