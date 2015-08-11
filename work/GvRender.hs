@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 module GvRender (
   renderGraph,
   printGraph,
@@ -8,7 +9,7 @@ import Data.GraphViz.Algorithms (transitiveReduction)
 import Data.GraphViz.Commands (runGraphvizCanvas, GraphvizCanvas(Xlib))
 import Data.GraphViz.Types
 import Data.GraphViz.Types.Monadic
-import Data.GraphViz.Types.Generalised (DotGraph)
+import Data.GraphViz.Types.Canonical (DotGraph)
 import Data.GraphViz.Attributes.Complete
 import Data.GraphViz.Attributes.Colors.X11
 import Data.Text.Lazy (unpack)
@@ -46,18 +47,16 @@ implementsPairs = renderEdges FilledArrow
 ------------------- Graph -------------------
 
 renderGraph :: [String] -> [String] -> [(String, String)] -> [(String, String)] -> DotGraph String
-renderGraph clss ifs expairs implpairs = removeTransitiveEdges . digraph' $ do
+renderGraph clss ifs expairs implpairs = transitiveReduction . digraph' $ do
     graphAttrs [RankDir FromBottom]
     classNodes clss
     interfaceNodes ifs
     extendsPairs expairs
     implementsPairs implpairs
-  where
-    removeTransitiveEdges = fromCanonical . transitiveReduction
 
 ------------------- Test -------------------
 
-printGraph, displayGraph :: DotGraph String -> IO ()
+printGraph, displayGraph :: PrintDotRepr gr String => gr String -> IO ()
 printGraph = putStrLn . unpack . printDotGraph
 displayGraph g = runGraphvizCanvas Dot g Xlib
 
