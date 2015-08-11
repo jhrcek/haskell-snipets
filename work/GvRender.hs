@@ -6,13 +6,13 @@ module GvRender (
  ) where
 
 import Data.GraphViz.Algorithms (transitiveReduction)
-import Data.GraphViz.Commands (runGraphvizCanvas, GraphvizCanvas(Xlib))
-import Data.GraphViz.Types
-import Data.GraphViz.Types.Monadic
-import Data.GraphViz.Types.Canonical (DotGraph)
 import Data.GraphViz.Attributes.Complete
-import Data.GraphViz.Attributes.Colors.X11
-import Data.Text.Lazy (unpack)
+import Data.GraphViz.Attributes.Colors.X11 (X11Color(LightSalmon, LightBlue))
+import Data.GraphViz.Commands (runGraphvizCanvas, GraphvizCanvas(Xlib))
+import Data.GraphViz.Types (PrintDotRepr, printDotGraph)
+import Data.GraphViz.Types.Monadic (Dot, nodeAttrs, edgeAttrs, graphAttrs, node', digraph', (-->))
+import Data.GraphViz.Types.Canonical (DotGraph)
+import qualified Data.Text.Lazy.IO as T
 
 ------------------- Nodes -------------------
 
@@ -57,7 +57,7 @@ renderGraph clss ifs expairs implpairs = transitiveReduction . digraph' $ do
 ------------------- Test -------------------
 
 printGraph, displayGraph :: PrintDotRepr gr String => gr String -> IO ()
-printGraph = putStrLn . unpack . printDotGraph
+printGraph = T.putStrLn . printDotGraph
 displayGraph g = runGraphvizCanvas Dot g Xlib
 
 printTest, displayTest :: IO ()
