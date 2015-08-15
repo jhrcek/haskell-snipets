@@ -1,33 +1,24 @@
 import Data.List 
 import GvRender
 
-parseItems :: [String] -> ([String],[String],[String],[String])
-parseItems lns = foldl' addItem ([],[],[],[]) topLvlItems
+
+parseAll :: String -> ([Construct], [Construct], [Edge])
+parseAll str = (classes, interfaces, parseInheritance inheritance)
   where
-    topLvlItems = filter (not . isPrefixOf "    ") lns
-    addItem (cls,ifs,ens,annots) line = 
-      let name = getName line in case words line of
-      ("class":_)      -> (name:cls, ifs, ens, annots)
-      ("interface":_)  -> (cls, name:ifs, ens, annots)
-      ("enum":_)       -> (cls, ifs, name:ens, annots)
-      ("annotation":_) -> (cls, ifs, ens, name:annots)
-      _                -> error $ "unexpected item: " ++ line
+    (constructs, inheritance) = break (== '[') str
+    cs = parseConstructs constructs
+    classes = filter (\c -> ctype c == Class) cs
+    interfaces = filter (\c -> ctype c == Interface) cs
 
-parseEdges :: [String] -> [(String, String)]
-parseEdges lns = snd $ foldl' addEdge ([],[]) lns
+parseInheritance :: String -> [Edge]
+parseInheritance = read
+
+parseConstructs :: String -> [Construct]
+parseConstructs = map parseConstr . lines
   where
-    addEdge (from, edgs) line
-        | "    " `isPrefixOf` line = let to = getName2 line in (from, (from,to):edgs)
-        | otherwise                = (getName line, edgs)
-
--- There are two types of lines:
---   top level lines that represent javadoc items
---   dependent items that represent stuff that top level item points to
-
--- extract name from top level line
-getName, getName2 :: String -> String
-getName line = name
-    where [construct,pkg,name] = words line
-
-getName2 line = name
-    where [verb,construct,pkg,name] = words line
+    parseConstr line = case words line of 
+      ["CLASS",      pkg, name, id] -> Construct Class      pkg name (read id)
+      ["INTERFACE",  pkg, name, id] -> Construct Interface  pkg name (read id)
+      ["ENUM",       pkg, name, id] -> Construct Enum       pkg name (read id)
+      ["ANNOTATION", pkg, name, id] -> Construct Annotation pkg name (read id)
+      _                -> error $ "Unexpected line : " ++ line
