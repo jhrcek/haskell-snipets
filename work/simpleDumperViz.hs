@@ -1,14 +1,10 @@
 import Data.List 
 import GvRender
 
-
-parseAll :: String -> ([Construct], [Construct], [Edge])
-parseAll str = (classes, interfaces, parseInheritance inheritance)
+parseAll :: String -> ([Construct], [Edge])
+parseAll str = (parseConstructs constructs, parseInheritance inheritance)
   where
     (constructs, inheritance) = break (== '[') str
-    cs = parseConstructs constructs
-    classes = filter (\c -> ctype c == Class) cs
-    interfaces = filter (\c -> ctype c == Interface) cs
 
 parseInheritance :: String -> [Edge]
 parseInheritance = read

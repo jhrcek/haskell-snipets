@@ -6,12 +6,14 @@ module GvRender (
 
   Construct(..),
   ConstructType(..),
-  Edge
+  Edge,
+
+  testGraph, printTest, displayTest
  ) where
 
 import Data.GraphViz.Algorithms (transitiveReduction)
 import Data.GraphViz.Attributes.Complete
-import Data.GraphViz.Attributes.Colors.X11 (X11Color(LightSalmon, LightBlue))
+import Data.GraphViz.Attributes.Colors.X11 (X11Color(LightSalmon, LightBlue, Green, Red))
 import Data.GraphViz.Commands (runGraphvizCanvas, GraphvizCanvas(Xlib))
 import Data.GraphViz.Types (PrintDotRepr, printDotGraph)
 import Data.GraphViz.Types.Monadic (Dot, nodeAttrs, edgeAttrs, graphAttrs, node, digraph', (-->))
@@ -27,60 +29,59 @@ data Construct = Construct {
     cid :: Int
   } deriving Show
 
-data ConstructType = Annotation | Class | Enum | Interface deriving (Show, Eq)
+data ConstructType = Annotation | Class | Enum | Interface deriving (Show, Eq, Ord)
 
 type Edge = (Int, Int)
 
-
 ------------------- Nodes -------------------
 
-renderNodes :: Shape -> X11Color -> [Construct] -> Dot Int
-renderNodes shape color constructs = do
-    nodeAttrs [
-        Shape shape,
-        Style [SItem Filled []],
-        FillColor [toWC $ X11Color color]
-      ]
-    mapM_ renderNode constructs
-  where renderNode construct = node (cid construct) [Label (StrLabel $ pack (cname construct))]
+renderNodes :: [Construct] -> Dot Int
+renderNodes = mapM_ renderNode 
+  where
+     renderNode c = node (cid c) [ Label . StrLabel . pack $ cname c
+                                 , FillColor [toWC $ X11Color ncolor]
+                                 , Shape nshape
+                                 ]
+       where (nshape, ncolor) = attrs $ ctype c
 
-classNodes, interfaceNodes :: [Construct] -> Dot Int
-classNodes = renderNodes BoxShape LightSalmon
-interfaceNodes = renderNodes Ellipse LightBlue
+-- color and shape assignment common for all constructs of given type
+attrs :: ConstructType -> (Shape, X11Color)
+attrs ct = case ct of 
+    Annotation -> (Ellipse, Red)
+    Class      -> (BoxShape, LightSalmon)
+    Enum       -> (BoxShape, Green)
+    Interface  -> (Ellipse, LightBlue)
 
 ------------------- Edges -------------------
 
 renderEdges :: [Edge] -> Dot Int
-renderEdges pairs = edgesWithOpenArrow >> mapM_ (uncurry (-->)) pairs
-  where 
-    edgesWithOpenArrow = edgeAttrs [ArrowHead (AType [(ArrMod OpenArrow BothSides, Normal)])] 
+renderEdges pairs = mapM_ (uncurry (-->)) pairs
 
 ------------------- Graph -------------------
 
-renderGraph :: [Construct] -> [Construct] -> [Edge] -> DotGraph Int
-renderGraph clss ifs inheritancePairs = transitiveReduction . digraph' $ do
-    graphAttrs [RankDir FromBottom]
-    classNodes clss
-    interfaceNodes ifs
+renderGraph :: [Construct] -> [Edge] -> DotGraph Int
+renderGraph constructs inheritancePairs = transitiveReduction . digraph' $ do
+    graphAttrs [ RankDir FromBottom 
+               , Overlap (PrismOverlap Nothing) --avoid overlapping nodes
+               ]
+    nodeAttrs [ Style [SItem Filled []] ] --needed for all nodes so that fill color is displayed
+    edgeAttrs [ ArrowHead (AType [(ArrMod OpenArrow BothSides, Normal)]) ] -- all arrows with open head
+    renderNodes constructs
     renderEdges inheritancePairs
-
 ------------------- Test -------------------
 
 printGraph, displayGraph :: PrintDotRepr gr Int => gr Int -> IO ()
 printGraph = T.putStrLn . printDotGraph
 displayGraph g = runGraphvizCanvas Dot g Xlib
 
-{-iprintTest, displayTest :: IO ()
 printTest = printGraph testGraph
 displayTest = displayGraph testGraph
 
-testGraph :: DotGraph String
-testGraph = renderGraph
-  ["ArrayList", "AbstractList", "AbstractSequentialList", "Object", "AbstractCollection", "LinkedList"]
-  ["List", "Iterable", "Queue"]
-  [("List", "Collection"), ("ArrayList", "AbstractList"), ("AbstractList", "AbstractCollection"),
-   ("AbstractCollection", "Object"), ("LinkedList", "AbstractSequentialList"), ("AbstractSequentialList", "AbstractList"),
-   ("Queue", "Collection"), ("Collection", "Iterable"), ("ArrayList","List"), ("LinkedList", "Queue"),
-   ("LinkedList", "List"), ("AbstractCollection", "Collection"), ("AbstractList", "List"),
-   ("ArrayList", "Collection"{-transitive edge to test tr. edge removal-})]
--}
+testGraph :: DotGraph Int
+testGraph = renderGraph 
+    [ Construct Class "java.lang" "Object" 1
+    , Construct Class "java.lang" "String" 2
+    , Construct Interface "java.util" "List" 3
+    , Construct Class "java.util" "ArrayList" 4
+    ]
+    [(2,1), (4,3), (4,1)]
