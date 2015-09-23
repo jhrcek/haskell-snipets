@@ -1,5 +1,6 @@
--- Analysis of TestNG's emailable-report.html
+{- Remove undesired stacktrace lines from TestNG's emailable-report.html -}
 {-# LANGUAGE OverloadedStrings #-}
+import Data.List (foldl')
 import Data.Text (Text, lines, unlines, head, isInfixOf)
 import Data.Text.IO (readFile, writeFile)
 import Prelude hiding (readFile, writeFile, lines, unlines, head)
@@ -29,10 +30,13 @@ type Stacktrace = Text
 
 -- Visit all stacktrace Tags (recognized by being preceeded by <div class="stacktrace">) and apply supplied function to their text
 modifyStacktraces :: (Stacktrace -> Stacktrace) -> [Tag Text] -> [Tag Text]
-modifyStacktraces modder = map snd . scanl f (False {- was previous tag stacktrace? -}, TagText "") 
-  where f (False, _) curTag = (isStacktraceDiv curTag, curTag)
-        f (True, _) stackTraceTag = (False, fmap modder stackTraceTag)
-
+modifyStacktraces modder = reverse . foldl' (applyToSts modder) []
+  where
+    applyToSts _ [] tag = [tag]
+    applyToSts f ts@(prevTag:_) curTag
+        | isStacktraceDiv prevTag = fmap f curTag : ts
+        | otherwise               =        curTag : ts
+         
 isStacktraceDiv :: Tag Text -> Bool
 isStacktraceDiv = tagOpenAttrNameLit "div" "class" (=="stacktrace")
 
