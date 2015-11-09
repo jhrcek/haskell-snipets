@@ -1,7 +1,8 @@
 module FiniteEndo where
 
 import Control.Monad (zipWithM_, replicateM)
-import Data.List (nub, sort)
+import Data.List (nub, sort, elemIndex)
+import Data.Maybe (mapMaybe)
 -- TODO move endo visualization stuff to separate module
 import Data.GraphViz (runGraphvizCanvas)
 import Data.GraphViz.Attributes.Complete (Attribute(FixedSize, Height, Width), NodeSize(SetNodeSize))
@@ -47,6 +48,12 @@ r `isRetractionOf` f = isIdentity $ r `compose` f
 
 isSectionOf :: FEndo -> FEndo -> Bool
 s `isSectionOf` f = isIdentity $ f `compose` s
+
+inverseOf :: FEndo -> Maybe FEndo
+inverseOf e
+    | isIsomorphism e = Just $ invert e
+    | otherwise       = Nothing
+  where invert e = mapMaybe (\x -> (+1) <$> elemIndex x e) [1 .. length e]
 
 eval :: FEndo -> Int -> Int --TODO should return Maybe?
 eval e x = e !! (x+1)
