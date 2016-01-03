@@ -1,8 +1,11 @@
+{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
+
 module WdUtil
     ( clickElem
-    , myWdConfig
+    , chromeConfig
     , setInput
     , withServer
+    , doInChrome
     ) where
 
 import Control.Concurrent (threadDelay)
@@ -10,9 +13,9 @@ import Control.Exception.Base (bracket)
 import Control.Monad ((>=>))
 import Data.Text (Text)
 import System.Process (createProcess, shell, terminateProcess)
-import Test.WebDriver (WDConfig, Selector, WD, findElem, click, clearInput, sendKeys, defaultConfig, defaultCaps, browser, chrome, wdCapabilities)
+import Test.WebDriver (WDConfig, Selector, WD, findElem, click, clearInput, sendKeys, defaultConfig, defaultCaps, browser, chrome, wdCapabilities, runSession, finallyClose)
 
-clickElem :: Selector -> WD()
+clickElem :: Selector -> WD ()
 clickElem = findElem >=> click
 
 setInput :: Selector -> Text -> WD ()
@@ -21,19 +24,21 @@ setInput sel txt = do
   clearInput inp
   sendKeys txt inp
 
-myWdConfig :: WDConfig
-myWdConfig = defaultConfig {
+chromeConfig :: WDConfig
+chromeConfig = defaultConfig {
     wdCapabilities = defaultCaps {browser = chrome}
   }
+
+doInChrome :: WD a -> IO a
+doInChrome action = withServer . runSession chromeConfig . finallyClose $ action
 
 {- Selenium server management -}
 
 -- Run action with selenium server running in the background, and stop the server afte that
 withServer ::  IO a -> IO a
 withServer action = bracket 
-    (do (_, _, _, procHandle) <- createProcess $ shell "java -jar selenium-server-standalone-2.45.0.jar -Dwebdriver.chrome.driver=chromedriver"
+    (do (_, _, _, procHandle) <- createProcess $ shell "java -jar selenium-server-standalone-2.48.2.jar -Dwebdriver.chrome.driver=chromedriver"
         threadDelay 3000000 --wait 3 s for server to start
         return procHandle)
-    (\ph -> terminateProcess ph)-- function called with procHandle after action is done
+    terminateProcess -- called with procHandle after action is done
     (const action)
-
