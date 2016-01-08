@@ -3,13 +3,14 @@ module Main where
 import Control.Monad (unless)
 import Data.GraphViz (runGraphvizCanvas', setStrictness)
 import Data.GraphViz.Attributes.Complete (RankDir(FromLeft), Attribute(RankDir))
-import Data.GraphViz.Commands (GraphvizCanvas(Xlib), isGraphvizInstalled)
+import Data.GraphViz.Commands (GraphvizCanvas(Xlib), quitWithoutGraphviz)
 import Data.GraphViz.Types.Generalised (DotGraph)
 import Data.GraphViz.Types.Monadic ((-->), digraph', graphAttrs)
 import Data.Tree (Tree(Node, rootLabel), unfoldTreeM)
 import System.Directory (doesFileExist)
 import System.Environment (getArgs)
 import System.FilePath ((</>))
+import System.Exit (exitFailure)
 import Text.XML.HXT.Core (runX, (/>), (//>), readDocument, hasName, getText)
 import Text.Printf (printf)
 
@@ -17,16 +18,24 @@ import Showdot (showDot)
 
 main :: IO ()
 main = do
-    gvInstalled <- isGraphvizInstalled
-    if gvInstalled
-      then putStrLn "Graphviz not installed. Please install it to proceed (http://www.graphviz.org/)"
-      else getArgs >>= main'
+    quitWithoutGraphviz "Graphviz not installed. Please install it to proceed (http://www.graphviz.org/)"
+    parseArgs >>= mainWithGraphviz
 
-main' :: [String] -> IO ()
-main' args = case args of
-    [] -> putStrLn "usage: mvnMods <path to maven project's root dir> [gv]"
-    (mvnRootDir:"gv":_) -> parseModuleStructure mvnRootDir >>= displayTreeGraphviz
-    (mvnRootDir:_)      -> parseModuleStructure mvnRootDir >>= displayTreeShowdot
+parseArgs :: IO (FilePath, Bool)
+parseArgs = getArgs >>= \args -> case args of
+    []               -> usage >> exitFailure
+    (projDir:"gv":_) -> return (projDir, True)
+    (projDir:_)      -> return (projDir, False)
+
+usage :: IO ()
+usage = putStrLn "usage: mvnMods <path to maven project's root dir> [gv]"
+
+mainWithGraphviz :: (FilePath, Bool) -> IO ()
+mainWithGraphviz (projectDir, useGvCanvas) =
+    parseModuleStructure projectDir >>=
+    if useGvCanvas
+        then displayTreeGraphviz
+        else displayTreeShowdot
        
 type ArtifactId = String
 
@@ -39,7 +48,7 @@ getModuleNames :: FilePath -- ^ Root directory of maven project
                -> IO (ArtifactId, [FilePath]) -- ^ (artifactId, [directories containing pom.xml of submodules])
 getModuleNames dir = do
     pomExists <- doesFileExist pom
-    unless pomExists (error $ pom ++ " does not exist")
+    unless pomExists (error $ "There is no pom.xml in " ++ dir)
     -- parse artifact id and modules from given pom
     let doc = readDocument [] pom
     [artifactId] <- runX $ doc /> artifactIdArr
