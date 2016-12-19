@@ -1,7 +1,7 @@
-data Tree a = Empty 
+data Tree a = Empty
             | Node a (Tree a) (Tree a) deriving (Show, Eq)
 
-data TreeCrumb a = LeftCrumb a (Tree a) 
+data TreeCrumb a = LeftCrumb a (Tree a)
                  | RightCrumb a (Tree a) deriving (Show, Eq)
 
 type TreeZipper a = (Tree a, [TreeCrumb a])
@@ -23,4 +23,3 @@ goUp (l, LeftCrumb x r:bs)  = (Node x l r, bs)
 
 decrumb :: TreeZipper a -> TreeZipper a
 decrumb = until (null . snd) goUp
-

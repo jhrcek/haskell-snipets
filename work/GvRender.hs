@@ -36,7 +36,7 @@ type Edge = (Int, Int)
 ------------------- Nodes -------------------
 
 renderNodes :: [Construct] -> Dot Int
-renderNodes = mapM_ renderNode 
+renderNodes = mapM_ renderNode
   where
      renderNode c = node (cid c) [ Label . StrLabel . pack $ cname c
                                  , FillColor [toWC $ X11Color ncolor]
@@ -46,7 +46,7 @@ renderNodes = mapM_ renderNode
 
 -- color and shape assignment common for all constructs of given type
 attrs :: ConstructType -> (Shape, X11Color)
-attrs ct = case ct of 
+attrs ct = case ct of
     Annotation -> (Ellipse, Red)
     Class      -> (BoxShape, LightSalmon)
     Enum       -> (BoxShape, Green)
@@ -55,13 +55,13 @@ attrs ct = case ct of
 ------------------- Edges -------------------
 
 renderEdges :: [Edge] -> Dot Int
-renderEdges pairs = mapM_ (uncurry (-->)) pairs
+renderEdges = mapM_ (uncurry (-->))
 
 ------------------- Graph -------------------
 
 renderGraph :: [Construct] -> [Edge] -> DotGraph Int
 renderGraph constructs inheritancePairs = transitiveReduction . digraph' $ do
-    graphAttrs [ RankDir FromBottom 
+    graphAttrs [ RankDir FromBottom
                , Overlap (PrismOverlap Nothing) --avoid overlapping nodes
                ]
     nodeAttrs [ Style [SItem Filled []] ] --needed for all nodes so that fill color is displayed
@@ -74,11 +74,12 @@ printGraph, displayGraph :: PrintDotRepr gr Int => gr Int -> IO ()
 printGraph = T.putStrLn . printDotGraph
 displayGraph g = runGraphvizCanvas Dot g Xlib
 
+printTest, displayTest :: IO ()
 printTest = printGraph testGraph
 displayTest = displayGraph testGraph
 
 testGraph :: DotGraph Int
-testGraph = renderGraph 
+testGraph = renderGraph
     [ Construct Class "java.lang" "Object" 1
     , Construct Class "java.lang" "String" 2
     , Construct Interface "java.util" "List" 3

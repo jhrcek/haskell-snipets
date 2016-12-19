@@ -1,15 +1,16 @@
-{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts, OverloadedStrings #-}
 
 import Control.Applicative ((<$>))
 import Control.Monad.IO.Class (liftIO)
 import Data.Maybe (catMaybes)
-import Data.Text (Text, concat, splitOn, append, pack)
+import Data.Text (Text, append, concat, pack, splitOn)
 import qualified Data.Text.IO as T
 import Prelude hiding (concat)
-import Test.WebDriver (runSession,finallyClose, WD, findElem, findElems, getText, Element, attr, openPage, click, Selector(..))
+import Test.WebDriver (Element, Selector (..), WD, attr, click, finallyClose,
+                       findElem, findElems, getText, openPage, runSession)
 import Test.WebDriver.Commands.Wait (waitWhile)
 
-import WdUtil (clickElem, setInput, myWdConfig, withServer)
+import WdUtil (clickElem, myWdConfig, setInput, withServer)
 
 main :: IO ()
 main = withServer . runSession myWdConfig . finallyClose $ do
@@ -24,7 +25,7 @@ formatWordData Word {wWord = w, wPronUrls = prons, wDefinitions = defs} = w `app
     else fmt "pron" prons `append` fmt "def" defs
     where fmt label items = concat $ zipWith (\ item index -> concat ["\n  ", label, index, " = ", item]) items textIdxs
           textIdxs = map (pack . show) [1..]
- 
+
 extractWordData :: Text -> WD WordData
 extractWordData word = do
   search word
@@ -32,9 +33,9 @@ extractWordData word = do
   pronUrls <- getPronUrls
   return Word {wWord = word, wPronUrls = pronUrls, wDefinitions = defs}
 
-data WordData = Word 
-    { wWord :: Text
-    , wPronUrls :: [Text]
+data WordData = Word
+    { wWord        :: Text
+    , wPronUrls    :: [Text]
     , wDefinitions :: [Text]
     }
 
@@ -46,7 +47,7 @@ getPronUrls :: WD [Text]
 getPronUrls = do
   playerElems <- findElems pronPlayer :: WD [Element]
   flashvars <- catMaybes <$> (mapM (`attr` "flashvars") playerElems :: WD [Maybe Text])
-  return $ map extractUrl flashvars 
+  return $ map extractUrl flashvars
   where extractUrl = last . splitOn "="
 
 
@@ -65,7 +66,7 @@ waitPanelsLoaded = waitWhile 5 $ findElem loadingAnimation
 
 search :: Text -> WD ()
 search str = do
-  setInput searchInput str 
+  setInput searchInput str
   clickElem searchButton
   waitPanelsLoaded
 

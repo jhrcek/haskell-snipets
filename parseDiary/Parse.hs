@@ -5,10 +5,11 @@ module Parse (
 
 import Control.Applicative ((<$>), (<*))
 import Data.List (elemIndex)
-import Text.Parsec (char, count, digit, many, many1, newline, oneOf, noneOf, string, upper, (<|>), optional, skipMany)
+import Text.Parsec (char, count, digit, many, many1, newline, noneOf, oneOf,
+                    optional, skipMany, string, upper, (<|>))
 import Text.Parsec.Error (ParseError)
 import Text.Parsec.Prim (unexpected)
-import Text.Parsec.String 
+import Text.Parsec.String
 
 getData :: Int -> IO (Either ParseError [Day])
 getData year = parseFromFile parseYear $ "DiaryLangs" ++ show year ++".txt"
@@ -26,9 +27,9 @@ parseMonth = do
 -- Parse number of month ("----- LEDEN -----" -> 1)
 parseMonthHeader :: Parser Int
 parseMonthHeader = do
-  string "----- "
+  _ <- string "----- "
   monthStr <- many upper
-  string " -----"
+  _ <- string " -----"
   case elemIndex monthStr monthNames of
     Just idx -> return $ idx + 1
     Nothing  -> unexpected $ "month String: " ++ monthStr
@@ -37,12 +38,12 @@ parseMonthHeader = do
 parseDay :: Int -> Parser Day
 parseDay month = do
   day <- read <$> count 2 digit
-  string ". "
+  _ <-  string ". "
   (words, revCnt) <- languageRecord
-  many $ char ' '
+  _ <-  many $ char ' '
   (xCnt, oCnt) <- parseXXX
   optional eolComment
-  newline
+  _ <- newline
   return $ Day month day words revCnt xCnt oCnt
 --  where eolComment = char '#' >> many $ noneOf '\n'
 
@@ -51,14 +52,14 @@ eolComment = many (char ' ') >> char '#' >> skipMany (noneOf "\n")
 
 languageRecord :: Parser (Int, Int)
 languageRecord = noLang <|> didLang
-  where 
+  where
     noLang = char '-' >> return (0,0)
     didLang = do
-      string "D+"
+      _ <- string "D+"
       wordsAdded <- read <$> many1 digit
-      char '('
+      _ <- char '('
       revCnt <- read <$> many1 digit
-      char ')'
+      _ <- char ')'
       return (wordsAdded, revCnt)
 
 parseXXX :: Parser (Int, Int)
@@ -67,5 +68,3 @@ parseXXX = do
   let xs = length . filter (== 'x') $ xos
       os = length . filter (== 'o') $ xos
   return (xs, os)
-
-

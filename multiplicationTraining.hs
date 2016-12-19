@@ -1,5 +1,6 @@
 import Control.Monad (replicateM, replicateM_)
-import System.IO (hSetBuffering, stdin, BufferMode(NoBuffering), hFlush, stdout)
+import System.IO (BufferMode (NoBuffering), hFlush, hSetBuffering, stdin,
+                  stdout)
 import System.Random (randomRIO)
 
 main :: IO ()
@@ -16,11 +17,9 @@ exercise = do
   hFlush stdout --is this necessary?
   let resStr = show (a * b)
   answer <- replicateM (length resStr) getChar
-  putStrLn $ if answer == resStr 
+  putStrLn $ if answer == resStr
     then "\nRight"
     else "\nWrong, it's " ++ resStr
-  
+
 genAssignment :: IO [Int]
 genAssignment = replicateM 2 $ randomRIO (1,10)
-                   
-

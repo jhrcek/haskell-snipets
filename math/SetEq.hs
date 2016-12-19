@@ -12,6 +12,7 @@ instance (Show a) => Show (Set a) where
 instance Functor Set where
   fmap f (Set s) = Set $ map f s
 
+showSet :: Show a => [a] -> ShowS
 showSet [] = showString "0"
 showSet (x:xs) = showChar '{' . shows x . showl xs
   where
@@ -51,7 +52,7 @@ powerList = foldr f [[]]
 
 takeSet :: Eq a => Int -> Set a -> Set a
 takeSet n (Set xs) = Set (take n xs)
- 
+
 infixl 9 !!!
 (!!!) :: Set a -> Int -> a
 (Set xs) !!! n = xs !! n
@@ -69,17 +70,12 @@ differenceSet (Set ls1) s2 = Set $ filter (\x -> not $ x `inSet` s2) ls1
 
 -- Stirling number : stirling n k = number of partitions of set with n elements into k partitions
 stirling :: Integral a => a -> a -> a
-stirling n 1 = 1
-stirling n k 
+stirling _ 1 = 1
+stirling n k
 --  | k > n = 0
   | k == n = 1
-  | otherwise = k * (stirling (n-1) k) + stirling (n-1) (k-1)
+  | otherwise = k * stirling (n-1) k + stirling (n-1) (k-1)
 
 -- Bell number: bell n = number of different partitions that can be made from a set with n elements
 bell :: Integral a => a -> a
 bell n = sum [stirling n k | k <- [1..n]]
-
-
-
-
-

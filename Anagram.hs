@@ -23,7 +23,7 @@ lookupAnagram :: Anagrams -> String -> [String]
 lookupAnagram anagrams w = M.findWithDefault [] (sort w) anagrams
 
 buildAnagrams :: FilePath -> IO Anagrams
-buildAnagrams = fmap (foldr addWord M.empty . words) . readFile 
+buildAnagrams = fmap (foldr addWord M.empty . words) . readFile
   where
     addWord :: String -> Anagrams -> Anagrams
     addWord w = M.insertWith (++) (sort w) [w]

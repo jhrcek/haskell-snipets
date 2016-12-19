@@ -2,17 +2,18 @@ module Main where
 
 import Control.Monad (unless)
 import Data.GraphViz (runGraphvizCanvas', setStrictness)
-import Data.GraphViz.Attributes.Complete (RankDir(FromLeft), Attribute(RankDir))
-import Data.GraphViz.Commands (GraphvizCanvas(Xlib), quitWithoutGraphviz)
+import Data.GraphViz.Attributes.Complete (Attribute (RankDir),
+                                          RankDir (FromLeft))
+import Data.GraphViz.Commands (GraphvizCanvas (Xlib), quitWithoutGraphviz)
 import Data.GraphViz.Types.Generalised (DotGraph)
-import Data.GraphViz.Types.Monadic ((-->), digraph', graphAttrs)
-import Data.Tree (Tree(Node, rootLabel), unfoldTreeM)
+import Data.GraphViz.Types.Monadic (digraph', graphAttrs, (-->))
+import Data.Tree (Tree (Node, rootLabel), unfoldTreeM)
 import System.Directory (doesFileExist)
 import System.Environment (getArgs)
-import System.FilePath ((</>))
 import System.Exit (exitFailure)
-import Text.XML.HXT.Core (runX, (/>), (//>), readDocument, hasName, getText)
+import System.FilePath ((</>))
 import Text.Printf (printf)
+import Text.XML.HXT.Core (getText, hasName, readDocument, runX, (//>), (/>))
 
 import Showdot (showDot)
 
@@ -36,7 +37,7 @@ mainWithGraphviz (projectDir, useGvCanvas) =
     if useGvCanvas
         then displayTreeGraphviz
         else displayTreeShowdot
-       
+
 type ArtifactId = String
 
 parseModuleStructure :: FilePath -- ^ Root directory of maven project
@@ -82,5 +83,3 @@ treeToEdgeList :: Tree a -> [(a,a)]
 treeToEdgeList (Node root subforest) =
     map (\subtree -> (root, rootLabel subtree)) subforest ++
     concatMap treeToEdgeList subforest
-
-

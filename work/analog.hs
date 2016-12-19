@@ -28,8 +28,8 @@ hasTime :: Line -> Bool
 hasTime = isPrefixOf "["
 
 linesWithDelayGreaterThan :: Int -> [(NominalDiffTime, Line)] -> [Line]
-linesWithDelayGreaterThan minDelay = 
-  map (\(d,l)-> "delay " ++ show d ++ ": " ++ l) 
+linesWithDelayGreaterThan minDelay =
+  map (\(d,l)-> "delay " ++ show d ++ ": " ++ l)
   . filter (\(d,_) -> d > fromIntegral minDelay)
 
 -- For each line in the list calculates time it took for the following line to appear

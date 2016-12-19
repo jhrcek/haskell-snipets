@@ -13,20 +13,20 @@ primeFactors n = pf n P.primes []
 data FiniteAbelianGroup = FAG [Integer] deriving Show
 
 -- Enumerates all possible abelian groups of given order up to isomorphism.
--- e.g. 
+-- e.g.
 -- > allAbelianGroups 12
 -- [FAG [3,2,2],FAG [3,4]]  -- means that there are 2 isomorphism classes of groups of order 12: Z3xZ2xZ2 and Z3xZ4
 allAbelianGroups :: Integer -> [FiniteAbelianGroup]
 allAbelianGroups order = map FAG possibleFactorizations
   where
-    pf = map (\xs -> (head xs, length xs)) . group $ primeFactors order 
+    pf = map (\xs -> (head xs, length xs)) . group $ primeFactors order
     powerPartitions = map fromPartition . partitions -- the ways in which p^r can be partitioned: e.g 2^3 can be partitioned 2x2x2, 2x4 or 8
     possibleFactorizations = map concat . sequence $ map (\(prime, power) -> map (map (prime^)) $ powerPartitions power) pf
 
 orderOfElement :: Integer -> Integer -> Integer
 orderOfElement grOrder elm
     | 0 <= elm && elm < grOrder = grOrder `div` gcd elm grOrder
-    | otherwise                 = error $ "Group Z_" ++ show grOrder ++ " can only have elements [0.." ++ show (grOrder -1) ++ "]. You tried " ++ show elm 
+    | otherwise                 = error $ "Group Z_" ++ show grOrder ++ " can only have elements [0.." ++ show (grOrder -1) ++ "]. You tried " ++ show elm
 
 
 -- > orderOfProductElement (FAG [3, 4]) [1,1]  -- order of element [1,1] of the direct product of Z3xZ4
@@ -37,4 +37,4 @@ orderOfProductElement (FAG subgrOrders) elm
     | otherwise = error $ "group " ++ show (FAG subgrOrders) ++ " doesn't have element " ++ show elm
 
 allElements :: FiniteAbelianGroup -> [[Integer]]
-allElements (FAG ords) = sequence $ map (enumFromTo 0 . subtract 1) ords
+allElements (FAG ords) = mapM (enumFromTo 0 . subtract 1) ords 

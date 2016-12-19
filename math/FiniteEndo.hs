@@ -1,15 +1,17 @@
 module FiniteEndo where
 
-import Control.Monad (zipWithM_, replicateM)
-import Data.List (nub, sort, elemIndex)
+import Control.Monad (replicateM, zipWithM_)
+import Data.Functor ((<$>))
+import Data.List (elemIndex, nub, sort)
 import Data.Maybe (mapMaybe)
 -- TODO move endo visualization stuff to separate module
 import Data.GraphViz (runGraphvizCanvas)
-import Data.GraphViz.Attributes.Complete (Attribute(FixedSize, Height, Width), NodeSize(SetNodeSize))
-import Data.GraphViz.Commands (GraphvizCanvas(Xlib), GraphvizCommand(Neato))
-import Data.GraphViz.Types.Monadic ((-->), digraph', nodeAttrs, Dot)
+import Data.GraphViz.Attributes.Complete (Attribute (FixedSize, Height, Width),
+                                          NodeSize (SetNodeSize))
+import Data.GraphViz.Commands (GraphvizCanvas (Xlib), GraphvizCommand (Neato))
 import Data.GraphViz.Types (printDotGraph)
 import Data.GraphViz.Types.Generalised (DotGraph)
+import Data.GraphViz.Types.Monadic (Dot, digraph', nodeAttrs, (-->))
 import Data.Text.Lazy (unpack)
 
 -- Endomorphisms on finite set [1..n] represented as list
@@ -64,7 +66,7 @@ display e = runGraphvizCanvas Neato (renderGraph e) Xlib
 
 renderGraph :: FEndo -> DotGraph Int
 renderGraph e = digraph' $ nodeAttrs attrs >> renderEdges e
-  where 
+  where
     renderEdges :: FEndo -> Dot Int
     renderEdges endo = zipWithM_ (-->) (domain endo) endo
     attrs = [FixedSize SetNodeSize, Width 0.25, Height 0.25]

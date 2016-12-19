@@ -1,28 +1,29 @@
 import Data.GraphViz.Attributes
-import Data.GraphViz.Attributes.Colors --X11Color
+import Data.GraphViz.Attributes.Colors
 import Data.GraphViz.Attributes.Complete
+import Data.GraphViz.Commands
 import Data.GraphViz.Types.Generalised
 import Data.GraphViz.Types.Monadic
-import Data.GraphViz.Commands
 
-main  = mapM_ display  [nodeShapesDemo, nodeColorsDemo]
+main :: IO ()
+main  = mapM_ display [nodeShapesDemo, nodeColorsDemo]
     where display gr = runGraphvizCanvas' gr Xlib
 
 nodeShapesDemo :: DotGraph String
 nodeShapesDemo = graph' $ mapM_ mkNode allShapes
-  where 
-    mkNode :: Shape -> Dot String 
-    mkNode shape = node (show shape) [Shape shape]
-    
+  where
+    mkNode :: Shape -> Dot String
+    mkNode s = node (show s) [Shape s]
+
     allShapes = [minBound..] :: [Shape]
 
 nodeColorsDemo :: DotGraph String
 nodeColorsDemo = graph' $ mapM_ mkNode allColors
   where
     mkNode :: X11Color -> Dot String
-    mkNode color = node (show color) [
+    mkNode col = node (show col) [
         Style [SItem Filled []],
-        FillColor [toWC $ X11Color color]
+        FillColor [toWC $ X11Color col]
       ]
 
     allColors = [minBound..] :: [X11Color]

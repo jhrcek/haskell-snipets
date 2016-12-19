@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts, OverloadedStrings #-}
 
 import Control.Concurrent (threadDelay)
 import Control.Monad (void)
@@ -7,10 +7,11 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import System.Environment (getArgs)
-import Test.WebDriver (runSession,finallyClose, WD, findElem, openPage, Selector(..))
+import Test.WebDriver (Selector (..), WD, finallyClose, findElem, openPage,
+                       runSession)
 import Test.WebDriver.Commands.Wait (waitUntil)
 
-import WdUtil (clickElem, setInput, myWdConfig, withServer)
+import WdUtil (clickElem, myWdConfig, setInput, withServer)
 
 main :: IO ()
 main = do
@@ -26,9 +27,9 @@ readChunks cs = withServer $ runSession myWdConfig . finallyClose $ do
   openPage "http://www.ivona.com/"
   selectVoice
   mapM_ readChunk cs
-  where 
+  where
     readChunk :: Text -> WD ()
-    readChunk c = do   
+    readChunk c = do
       setTextToRead c
       play
       waitPlayDone
@@ -36,7 +37,7 @@ readChunks cs = withServer $ runSession myWdConfig . finallyClose $ do
 -- Input chunking
 chunkText :: Int -> Text -> [Text]
 chunkText maxChnkSize txt = reverse $ foldl chunk [] (T.words txt)
-  where 
+  where
     chunk []     word = [word]
     chunk (c:cs) word = if 1 + T.length word + T.length c <= maxChnkSize
                           then (c `T.snoc` ' ' `T.append` word) : cs --append word to existing chunk
@@ -51,7 +52,7 @@ waitPlayDone :: WD ()
 waitPlayDone = void . waitUntil 30 . findElem $ ByXPath "//span[@id='voiceTesterLogicpbuttext'][contains(text(),'Play')]"
 
 setTextToRead :: Text -> WD ()
-setTextToRead txt = setInput (ById "VoiceTesterForm_text") txt
+setTextToRead = setInput (ById "VoiceTesterForm_text")
 
 selectVoice :: WD ()
 selectVoice = do

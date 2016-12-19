@@ -1,6 +1,6 @@
 import Data.Char (isAlpha, isSpace, toLower)
 import Data.Foldable (find)
-import Data.List (sortBy, groupBy)
+import Data.List (groupBy, sortBy)
 import Data.Ord (comparing)
 import Data.Tree
 import Text.Printf (printf)

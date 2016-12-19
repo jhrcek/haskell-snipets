@@ -1,8 +1,8 @@
-module Showdot (showDot) where 
-import System.Directory (removeFile)
-import System.Process (runCommand, waitForProcess)
-import System.IO (hPutStr,IOMode(WriteMode), withFile)
+module Showdot (showDot) where
 import Control.Monad (void)
+import System.Directory (removeFile)
+import System.IO (IOMode (WriteMode), hPutStr, withFile)
+import System.Process (runCommand, waitForProcess)
 
 showDot :: String -> IO ()
 showDot dotStr = do
@@ -12,10 +12,9 @@ showDot dotStr = do
  where
     generateImage = runCmd "dot -Tpng -o a.png tmp.dot"
     displayImage = runCmd "shotwell a.png"
-    runCmd cmdStr = runCommand cmdStr >>= void . waitForProcess 
+    runCmd cmdStr = runCommand cmdStr >>= void . waitForProcess
 
 writeToTempFile :: String -> IO ()
-writeToTempFile content = 
+writeToTempFile content =
     withFile "tmp.dot" WriteMode $ \handle ->
        hPutStr handle content
-

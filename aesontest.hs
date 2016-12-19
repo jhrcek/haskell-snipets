@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Data.Aeson ((.:), decode, FromJSON, parseJSON, Value(..))
 import Control.Applicative
 import Control.Monad (mzero)
+import Data.Aeson (FromJSON, Value (..), decode, parseJSON, (.:))
 import qualified Data.ByteString.Lazy.Char8 as BS
 
 data Person = Person
     { name :: String
-    , age :: Int
+    , age  :: Int
     } deriving Show
 
 instance FromJSON Person where
@@ -16,4 +16,4 @@ instance FromJSON Person where
     <*> o .: "age"
   parseJSON _ = mzero
 
-main = print (decode $ BS.pack "{\"name\":\"John\", \"age\":25}" :: Maybe Person)  
+main = print (decode $ BS.pack "{\"name\":\"John\", \"age\":25}" :: Maybe Person)

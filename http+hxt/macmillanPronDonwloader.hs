@@ -1,12 +1,12 @@
-import Control.Monad (unless, void)
-import Data.List (isInfixOf)
-import Network.HTTP (getRequest, rspBody, Response)
-import Network.Browser (browse, request, setOutHandler)
-import Network.URI (URI, isURI)
-import System.Exit (ExitCode(ExitSuccess))
-import System.Process (system)
-import Text.XML.HXT.Core (runX, (>>>))
+import Control.Monad     (unless, void)
+import Data.List         (isInfixOf)
+import Network.Browser   (browse, request, setOutHandler)
+import Network.HTTP      (Response, getRequest, rspBody)
+import Network.URI       (URI, isURI)
+import System.Exit       (ExitCode (ExitSuccess))
+import System.Process    (system)
 import Text.HandsomeSoup (css, parseHtml, (!))
+import Text.XML.HXT.Core (runX, (>>>))
 
 main :: IO ()
 main = searchLoop
@@ -33,7 +33,7 @@ data SearchResult = NotFound
 -- | Search word in dictionary, download the page and extract Pron URL from it
 lookupPronunciation :: String -> IO SearchResult
 lookupPronunciation word
-    | isURI (searchUrl word) = do  
+    | isURI (searchUrl word) = do
         (rspUrl, rsp) <- getDictionaryPage (searchUrl word)
         if "spellcheck" `isInfixOf` show rspUrl
             then return NotFound

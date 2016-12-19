@@ -1,6 +1,6 @@
-import System.IO
 import Control.Exception.Base (bracket)
 import Control.Monad (unless)
+import System.IO
 
 fileLoop :: IO()
 fileLoop = do

@@ -1,5 +1,5 @@
 import Data.List (elemIndex)
-import Data.Ratio ((%), numerator, denominator)
+import Data.Ratio (denominator, numerator, (%))
 
 --return (potentially infinite) list of digits forming decimal expansion of given rational
 decimalExpansion :: Rational -> [Integer]
@@ -26,7 +26,7 @@ decForm x
 
 decF :: Integer -> Integer -> [(Int, Integer)] -> ([Int], [Int])
 decF n d xs
-    | r == 0 = (reverse (q:(map fst xs)), [])
+    | r == 0 = (reverse (q : map fst xs), [])
     | elem (q, r) xs = (ys, zs)
     | otherwise = decF (r*10) d ((q,r):xs)
   where

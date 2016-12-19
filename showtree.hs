@@ -42,7 +42,7 @@ showTreeWith hang wide t
   | otherwise = showsTree wide [] [] t ""
 
 showsTree :: Show a => Bool -> [String] -> [String] -> Tree a -> ShowS
-showsTree wide lbars rbars t = case t of 
+showsTree wide lbars rbars t = case t of
   Empty -> showsBars lbars . showString "|\n"
   Node x Empty Empty
         -> showsBars lbars . shows x . showString "\n"
@@ -56,7 +56,7 @@ showsTree wide lbars rbars t = case t of
 showsTreeHang :: Show a => Bool -> [String] -> Tree a -> ShowS
 showsTreeHang wide bars t = case t of
   Empty -> showsBars bars . showString "|\n"
-  Node x Empty Empty 
+  Node x Empty Empty
         -> showsBars bars . shows x . showString "\n"
   Node x l r
         -> showsBars bars . shows x . showString "\n" .

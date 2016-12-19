@@ -15,7 +15,7 @@ import Text.Printf (printf)
 data AnkiNote = AnkiNote
     { noteId :: Int
     , noteFlds :: String
-    , noteTags :: String 
+    , noteTags :: String
     }  deriving (Show)
 
 instance FromRow AnkiNote where
@@ -68,14 +68,14 @@ validateNotes conn = do
         let badNotes = filter rule notes
         if null badNotes
             then putStrLn $ "PASSED: " ++ description
-            else do 
+            else do
                 putStrLn $ printf "FAILED: %s (%d notes)" description (length badNotes)
                 mapM_ (putStrLn . (\n -> printf "   --->  nid:%d %s" (noteId n) (noteFlds n))) badNotes
 
 {-  let badNotes = filter hasQuot notes
     mapM_ (updateNote conn) badNotes  -}
 
-replaceInFlds :: AnkiNote -> String -> String -> (String, Int) 
+replaceInFlds :: AnkiNote -> String -> String -> (String, Int)
 replaceInFlds note regex replacement = (newFlds, noteId note)
   where newFlds = subRegex (mkRegex regex) (noteFlds note) replacement
 
@@ -88,7 +88,7 @@ updateNote con note = do
 type NoteFilter = AnkiNote -> Bool
 
 noteRules :: [(NoteFilter, String)]
-noteRules = 
+noteRules =
     [ (wrongFieldCount, "Note must have 4 fields")
     , (lastFieldNotY, "The last field of note must be 'y'")
     , (maskFemNeutWithoutWort, "Note with Maskulinum/Femininum/Neutrum must have 'wort' tag")
@@ -100,7 +100,7 @@ noteRules =
     ]
 
 wrongFieldCount :: NoteFilter --each note must have 4 fields
-wrongFieldCount = (/= 4) . length . getFields 
+wrongFieldCount = (/= 4) . length . getFields
 
 lastFieldNotY :: NoteFilter --last field of each note must be y
 lastFieldNotY = (/= "y") . getY
@@ -110,7 +110,7 @@ maskFemNeutWithoutWort note = any (`isInfixOf` tags) ["Maskulinum", "Femininum" 
     where tags = noteTags note
 
 derDieDasWithoutTag :: NoteFilter -- Word has r/e/s <=> it has Maskulinum/Femininum/Neutrum tag
-derDieDasWithoutTag note = 
+derDieDasWithoutTag note =
        prefixAndTagInconsistent ["r ", "r/e ", "r/s "] "Maskulinum"
     || prefixAndTagInconsistent ["e ", "r/e "]         "Femininum"
     || prefixAndTagInconsistent ["s ", "(s) ", "r/s "] "Neutrum"
