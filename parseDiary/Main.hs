@@ -1,3 +1,5 @@
+module Main where
+
 import Parse
 import Text.Printf (printf)
 import Control.Applicative ((<$>))
@@ -10,7 +12,7 @@ toCsvLine y Day {monthNum = m, dayNum = d, wordsAdded = w, revCnt = r, xCnt = x,
 
 main = do
   putStrLn "'date', 'words added', 'review count', 'x count', 'o count'"
-  forM_ [2013, 2014, 2015] $ \year -> do
+  forM_ [2013, 2014, 2015,2016] $ \year -> do
     eitherDayList <- getData year
     case eitherDayList of
         Right dl -> do
