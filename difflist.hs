@@ -22,4 +22,6 @@ revDList = toList . r
 -- From prelude - fastest
 revPrelude :: [a] -> [a]
 revPrelude = foldl (flip (:)) []
+
+f = (.).(.)
 --
