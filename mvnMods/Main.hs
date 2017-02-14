@@ -7,6 +7,8 @@ import Data.GraphViz.Attributes.Complete (Attribute (RankDir),
 import Data.GraphViz.Commands (GraphvizCanvas (Xlib), quitWithoutGraphviz)
 import Data.GraphViz.Types.Generalised (DotGraph)
 import Data.GraphViz.Types.Monadic (digraph', graphAttrs, (-->))
+import Data.List (stripPrefix)
+import Data.Maybe (fromMaybe)
 import Data.Tree (Tree (Node, rootLabel), unfoldTreeM)
 import System.Directory (doesFileExist)
 import System.Environment (getArgs)
@@ -22,21 +24,39 @@ main = do
     quitWithoutGraphviz "Graphviz not installed. Please install it to proceed (http://www.graphviz.org/)"
     parseArgs >>= mainWithGraphviz
 
-parseArgs :: IO (FilePath, Bool)
-parseArgs = getArgs >>= \args -> case args of
-    []               -> usage >> exitFailure
-    (projDir:"gv":_) -> return (projDir, True)
-    (projDir:_)      -> return (projDir, False)
+data Opts = Opts
+  { dirToScan     :: FilePath
+  , useCanvas     :: Bool
+  , prefixToStrip :: Maybe String
+  }
+
+parseArgs :: IO Opts
+parseArgs = do
+  args <- getArgs
+  case args of
+    [] -> usage >> exitFailure
+    xs -> let dir = head args
+              canvas =  "gv" `elem` args
+              prefix = if "-p" `elem` xs then Just (last xs) else Nothing
+          in return Opts
+               { dirToScan = dir
+               , useCanvas = canvas
+               , prefixToStrip = prefix
+               }
 
 usage :: IO ()
-usage = putStrLn "usage: mvnMods <path to maven project's root dir> [gv]"
+usage = putStrLn "usage: mvnMods <path to maven project's root dir> [gv] [-p prefix-to-strip]"
 
-mainWithGraphviz :: (FilePath, Bool) -> IO ()
-mainWithGraphviz (projectDir, useGvCanvas) =
-    parseModuleStructure projectDir >>=
-    if useGvCanvas
-        then displayTreeGraphviz
-        else displayTreeShowdot
+mainWithGraphviz :: Opts -> IO ()
+mainWithGraphviz o = do
+    tree <- parseModuleStructure (dirToScan o)
+    let tree' = fmap (maybe id strip (prefixToStrip o)) tree
+    if useCanvas o
+        then displayTreeGraphviz tree'
+        else displayTreeShowdot tree'
+
+strip :: String -> String -> String
+strip p s = fromMaybe s $ stripPrefix p s
 
 type ArtifactId = String
 
