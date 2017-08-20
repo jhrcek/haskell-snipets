@@ -51,6 +51,9 @@ r `isRetractionOf` f = isIdentity $ r `compose` f
 isSectionOf :: FEndo -> FEndo -> Bool
 s `isSectionOf` f = isIdentity $ f `compose` s
 
+fixedPointCount :: FEndo -> Int
+fixedPointCount = length . filter id . zipWith (==) [1..]
+
 inverseOf :: FEndo -> Maybe FEndo
 inverseOf e
     | isIsomorphism e = Just $ invert e
