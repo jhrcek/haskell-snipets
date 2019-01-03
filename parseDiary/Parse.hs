@@ -1,7 +1,9 @@
-module Parse (
-  Day(..),
-  getData
-  ) where
+{-# LANGUAGE RecordWildCards  #-}
+{-# LANGUAGE TypeApplications #-}
+module Parse
+    ( Day(..)
+    , getData
+    ) where
 
 import Control.Applicative ((<$>), (<*))
 import Data.List (elemIndex)
@@ -21,30 +23,30 @@ parseYear = concat <$> count 12 parseMonth
 
 parseMonth :: Parser [Day]
 parseMonth = do
-  monthIdx <- parseMonthHeader <* newline
-  many1 (parseDay monthIdx) <* newline
+    monthIdx <- parseMonthHeader <* newline
+    many1 (parseDay monthIdx) <* newline
 
 -- Parse number of month ("----- LEDEN -----" -> 1)
 parseMonthHeader :: Parser Int
 parseMonthHeader = do
-  _ <- string "----- "
-  monthStr <- many upper
-  _ <- string " -----"
-  case elemIndex monthStr monthNames of
-    Just idx -> return $ idx + 1
-    Nothing  -> unexpected $ "month String: " ++ monthStr
-  where monthNames = ["LEDEN", "UNOR", "BREZEN", "DUBEN", "KVETEN", "CERVEN", "CERVENEC", "SRPEN", "ZARI", "RIJEN", "LISTOPAD", "PROSINEC"]
+    _ <- string "----- "
+    monthStr <- many upper
+    _ <- string " -----"
+    case elemIndex monthStr monthNames of
+      Just idx -> return $ idx + 1
+      Nothing  -> unexpected $ "month String: " ++ monthStr
+    where monthNames = ["LEDEN", "UNOR", "BREZEN", "DUBEN", "KVETEN", "CERVEN", "CERVENEC", "SRPEN", "ZARI", "RIJEN", "LISTOPAD", "PROSINEC"]
 
 parseDay :: Int -> Parser Day
-parseDay month = do
-  day <- read <$> count 2 digit
-  _ <-  string ". "
-  (words, revCnt) <- languageRecord
-  _ <-  many $ char ' '
-  (xCnt, oCnt) <- parseXXX
-  optional eolComment
-  _ <- newline
-  return $ Day month day words revCnt xCnt oCnt
+parseDay monthNum = do
+    dayNum <- read @Int <$> count 2 digit
+    _ <-  string ". "
+    (wordsAdded, revCnt) <- languageRecord
+    _ <-  many $ char ' '
+    (xCnt, oCnt) <- parseXXX
+    optional eolComment
+    _ <- newline
+    return Day{..}
 --  where eolComment = char '#' >> many $ noneOf '\n'
 
 eolComment :: Parser ()
@@ -64,7 +66,7 @@ languageRecord = noLang <|> didLang
 
 parseXXX :: Parser (Int, Int)
 parseXXX = do
-  xos <- many $ oneOf "xo"
-  let xs = length . filter (== 'x') $ xos
-      os = length . filter (== 'o') $ xos
-  return (xs, os)
+    xos <- many $ oneOf "xo"
+    let xs = length . filter (== 'x') $ xos
+        os = length . filter (== 'o') $ xos
+    return (xs, os)
