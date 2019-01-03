@@ -1,0 +1,44 @@
+digraph G {
+rankdir=BT
+node [style="filled"]
+// class: lightblue
+// data: salmon
+// type : aquamarine
+// newtype : orange
+1 [label="WDSessionState",fillcolor="lightblue"]
+2 [label="Monad",fillcolor="lightblue"]
+3 [label="Applicative",fillcolor="lightblue"]
+4 [label="WebDriver",fillcolor="lightblue"]
+5 [label="WDSessionStateControl",fillcolor="aquamarine"]
+6 [label="WebDriverConfig",fillcolor="lightblue"]
+7 [label="WDConfig",fillcolor="salmon"]
+8 [label="MonadBaseControl",fillcolor="lightblue"]
+9 [label="MonadBase",fillcolor="lightblue"]
+10 [label="WDSession",fillcolor="salmon"]
+11 [label="WD",fillcolor="orange"]
+12 [label="Functor",fillcolor="lightblue"]
+13 [label="MonadCatch",fillcolor="lightblue"]
+14 [label="MonadThrow",fillcolor="lightblue"]
+15 [label="HasCapabilities",fillcolor="aquamarine"]
+16 [label="GetCapabilities",fillcolor="lightblue"]
+17 [label="SetCapabilities",fillcolor="lightblue"]
+18 [label="Capabilities",fillcolor="salmon"]
+19 [label="MonadFix",fillcolor="lightblue"]
+20 [label="MonadIO",fillcolor="lightblue"]
+1 -> {2}
+7 -> 6
+4 -> 5
+5 -> {1,8}
+8 -> 9
+9 -> 2
+11->4
+3->12
+2->3
+13->14
+14->2
+11->{13,19,20}
+15-> {16,17}
+18->16
+19->2
+20->2
+}
