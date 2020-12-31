@@ -2,7 +2,7 @@
 module Main where
 
 import Control.Monad (forM_)
-import Parse
+import Parse ( Day(..), getData )
 import Text.Printf (printf)
 
 type DayLine = String
@@ -14,7 +14,7 @@ toCsvLine year Day{..} =
 main :: IO ()
 main = do
   putStrLn "'date', 'words added', 'review count', 'x count', 'o count'"
-  forM_ [2013 .. 2019] $ \year -> do
+  forM_ [2013 .. 2020] $ \year -> do
     eitherDayList <- getData year
     case eitherDayList of
         Right dl -> do

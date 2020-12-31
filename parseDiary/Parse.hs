@@ -5,13 +5,12 @@ module Parse
     , getData
     ) where
 
-import Control.Applicative ((<$>), (<*))
 import Data.List (elemIndex)
-import Text.Parsec (char, count, digit, many, many1, newline, noneOf, oneOf,
-                    optional, skipMany, string, upper, (<|>))
+import Text.Parsec (char, count, digit, many, many1, newline, noneOf, oneOf, optional, skipMany,
+                    string, upper, (<|>))
 import Text.Parsec.Error (ParseError)
 import Text.Parsec.Prim (unexpected)
-import Text.Parsec.String
+import Text.Parsec.String (Parser, parseFromFile)
 
 getData :: Int -> IO (Either ParseError [Day])
 getData year = parseFromFile parseYear $ "DiaryLangs" ++ show year ++".txt"
