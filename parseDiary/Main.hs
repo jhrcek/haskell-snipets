@@ -6,14 +6,11 @@ import Data.Foldable (for_)
 import Parse (Day (..), getData)
 import Text.Printf (printf)
 
-
 type DayLine = String
-
 
 toCsvLine :: Int -> Day -> String
 toCsvLine year Day{..} =
     printf "'%02d-%02d-%d', '%d', '%d', '%d', '%d'" dayNum monthNum year wordsAdded revCnt xCnt oCnt
-
 
 main :: IO ()
 main = do

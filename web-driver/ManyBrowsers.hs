@@ -13,5 +13,5 @@ createSessionIO = runSession (useBrowser chrome defaultConfig) getSession
 
 doActionInManyBrowsers :: WD () -> IO ()
 doActionInManyBrowsers action = do
-  sessions <- replicateM 3 createSessionIO
-  mapM_ (\s -> runWD s $ action >> closeSession) sessions
+    sessions <- replicateM 3 createSessionIO
+    mapM_ (\s -> runWD s $ action >> closeSession) sessions

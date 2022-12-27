@@ -7,13 +7,15 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 
 data Person = Person
     { name :: String
-    , age  :: Int
-    } deriving Show
+    , age :: Int
+    }
+    deriving (Show)
 
 instance FromJSON Person where
-  parseJSON (Object o) = Person
-    <$> o .: "name"
-    <*> o .: "age"
-  parseJSON _ = mzero
+    parseJSON (Object o) =
+        Person
+            <$> o .: "name"
+            <*> o .: "age"
+    parseJSON _ = mzero
 
 main = print (decode $ BS.pack "{\"name\":\"John\", \"age\":25}" :: Maybe Person)

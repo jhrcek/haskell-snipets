@@ -1,10 +1,10 @@
-import Control.Monad     (unless, void)
-import Data.List         (isInfixOf)
-import Network.Browser   (browse, request, setOutHandler)
-import Network.HTTP      (Response, getRequest, rspBody)
-import Network.URI       (URI, isURI)
-import System.Exit       (ExitCode (ExitSuccess))
-import System.Process    (system)
+import Control.Monad (unless, void)
+import Data.List (isInfixOf)
+import Network.Browser (browse, request, setOutHandler)
+import Network.HTTP (Response, getRequest, rspBody)
+import Network.URI (URI, isURI)
+import System.Exit (ExitCode (ExitSuccess))
+import System.Process (system)
 import Text.HandsomeSoup (css, parseHtml, (!))
 import Text.XML.HXT.Core (runX, (>>>))
 
@@ -25,10 +25,11 @@ searchLoop = do
                 downloadMp3 url word >>= maybe (return ()) mplayer
         searchLoop
 
-data SearchResult = NotFound
-                  | PronNotAvailable
-                  | Found String -- Url of mp3
-                  deriving (Show)
+data SearchResult
+    = NotFound
+    | PronNotAvailable
+    | Found String -- Url of mp3
+    deriving (Show)
 
 -- | Search word in dictionary, download the page and extract Pron URL from it
 lookupPronunciation :: String -> IO SearchResult
@@ -41,12 +42,13 @@ lookupPronunciation word
                 let dictionaryHtmlSrc = rspBody rsp
                 mp3UrlList <- extractPronUrls dictionaryHtmlSrc
                 case mp3UrlList of
-                    []         -> return PronNotAvailable
-                    (mp3Url:_) -> return $ Found mp3Url
+                    [] -> return PronNotAvailable
+                    (mp3Url : _) -> return $ Found mp3Url
     | otherwise = return NotFound
 
--- | Submit get request to dictionary url.
--- Using browse (not simpleHTTP) because Mc Millan dictionary uses redirects
+{- | Submit get request to dictionary url.
+ Using browse (not simpleHTTP) because Mc Millan dictionary uses redirects
+-}
 getDictionaryPage :: String -> IO (URI, Response String)
 getDictionaryPage url = browse $ do
     setOutHandler . const $ return () -- surpress browser output to stdout
@@ -61,12 +63,14 @@ searchUrl :: String -> String
 searchUrl word = "http://www.macmillandictionary.com/search/british/direct/?q=" ++ word
 
 downloadMp3 :: String -> String -> IO (Maybe FilePath)
-downloadMp3 url word  = do
-  exitCode <- system $ "wget --no-verbose " ++ url ++ " --output-document=" ++ mp3
-  return $ if exitCode == ExitSuccess
-    then Just mp3
-    else Nothing
-  where mp3 = word ++ ".mp3"
+downloadMp3 url word = do
+    exitCode <- system $ "wget --no-verbose " ++ url ++ " --output-document=" ++ mp3
+    return $
+        if exitCode == ExitSuccess
+            then Just mp3
+            else Nothing
+  where
+    mp3 = word ++ ".mp3"
 
 mplayer :: FilePath -> IO ()
 mplayer mp3File = void . system $ "mplayer " ++ mp3File

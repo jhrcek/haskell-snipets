@@ -1,8 +1,9 @@
 #!/usr/bin/env stack
 -- stack script --resolver lts-11.8 --package webdriver,text
-import           Control.Monad.IO.Class
-import qualified Data.Text.IO           as Txt
-import           Test.WebDriver
+
+import Control.Monad.IO.Class
+import qualified Data.Text.IO as Txt
+import Test.WebDriver
 
 -- Prerequisites
 -- 1. selenium server running in the background: `java -jar selenium-server-standalone-2.53.0.jar` (newer versions not supported by webdriver library)
@@ -10,9 +11,9 @@ import           Test.WebDriver
 
 main :: IO ()
 main = runSession config . finallyClose $ do
-  openPage "https://mvnrepository.com/artifact/org.apache.camel/camel-test/2.18.2"
-  src <- getSource
-  liftIO $ Txt.writeFile "tmp.html" src
+    openPage "https://mvnrepository.com/artifact/org.apache.camel/camel-test/2.18.2"
+    src <- getSource
+    liftIO $ Txt.writeFile "tmp.html" src
 
 config :: WDConfig
 config = useBrowser chrome defaultConfig

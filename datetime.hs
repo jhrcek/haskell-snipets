@@ -1,5 +1,9 @@
-import Data.Time.Clock (DiffTime, UTCTime, picosecondsToDiffTime,
-                        secondsToDiffTime)
+import Data.Time.Clock
+    ( DiffTime
+    , UTCTime
+    , picosecondsToDiffTime
+    , secondsToDiffTime
+    )
 import Data.Time.Clock.POSIX (POSIXTime, posixSecondsToUTCTime)
 import Data.Time.Format (formatTime)
 import System.Locale (defaultTimeLocale)
@@ -13,7 +17,7 @@ t4 = picosecondsToDiffTime 20
 
 -- POSIXTime is type synonym for NominalDiffTime, which is like DiffTime, but with implicit stating point
 t5 :: POSIXTime
-t5 = 10 :: POSIXTime --10 sec after EPOCH (1.1.1970)
+t5 = 10 :: POSIXTime -- 10 sec after EPOCH (1.1.1970)
 
 -- UTCTime (Coordinated Universal Time) is main type for dealing with time in Haskell
 t6 :: UTCTime

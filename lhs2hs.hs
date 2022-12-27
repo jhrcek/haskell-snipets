@@ -17,7 +17,7 @@ parseArgs :: IO FilePath
 parseArgs = do
     args <- getArgs
     when (length args /= 1) die
-    let infile =  head args
+    let infile = head args
     exists <- doesFileExist infile
     when (takeExtension infile /= ".lhs" || not exists) die
     return infile
@@ -29,5 +29,5 @@ convert = unlines . mapMaybe f . lines
   where
     f line = case line of
         ('>' : ' ' : rest) -> Just rest
-        ('>' : rest)       -> Just rest
+        ('>' : rest) -> Just rest
         _ -> Nothing

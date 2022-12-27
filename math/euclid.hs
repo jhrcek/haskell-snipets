@@ -1,14 +1,12 @@
-import Text.Printf (printf, PrintfArg)
 import Control.Monad (unless)
+import Text.Printf (PrintfArg, printf)
 
 euclid :: (Integral a, PrintfArg a, Show a) => a -> a -> IO ()
 euclid x y
-    | x < y     = euclid y x
+    | x < y = euclid y x
     | otherwise = do
         let (k, rem) = divMod x y
         putStrLn $ printf "%d = %d * %d + %d" x k y rem
         if rem == 0
-           then putStrLn $ " -> gcd = " ++ show y
-           else euclid y rem
-              
-
+            then putStrLn $ " -> gcd = " ++ show y
+            else euclid y rem

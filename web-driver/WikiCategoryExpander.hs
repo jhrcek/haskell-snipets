@@ -1,20 +1,21 @@
-{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
-import WdUtil
+import Data.Text (Text)
+import Data.Text.IO
 import Test.WebDriver
 import Test.WebDriver.Commands.Wait
-import Data.Text.IO
-import Data.Text (Text)
+import WdUtil
 
 scrapeProofWikiDefinitions :: WD Text
 scrapeProofWikiDefinitions = do
-  openPage "https://en.wikipedia.org/wiki/Category:Fields_of_mathematics"
-  waitWhile 1500 $ clickElem (ByCSS ".CategoryTreeToggle[title=expand]")
-  getSource
+    openPage "https://en.wikipedia.org/wiki/Category:Fields_of_mathematics"
+    waitWhile 1500 $ clickElem (ByCSS ".CategoryTreeToggle[title=expand]")
+    getSource
 
 main :: IO ()
 main = do
-  pageSource <- doInChrome scrapeProofWikiDefinitions
-  Data.Text.IO.writeFile "cats" pageSource
-
+    pageSource <- doInChrome scrapeProofWikiDefinitions
+    Data.Text.IO.writeFile "cats" pageSource

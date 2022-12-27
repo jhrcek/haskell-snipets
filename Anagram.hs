@@ -16,8 +16,8 @@ main = buildAnagrams "/home/jhrcek/Temp/hs/10000en.txt" >>= loop
   where
     loop :: Anagrams -> IO ()
     loop anagrams = forever $ do
-      putStrLn "Anagrams of ..."
-      getLine >>= print . lookupAnagram anagrams
+        putStrLn "Anagrams of ..."
+        getLine >>= print . lookupAnagram anagrams
 
 lookupAnagram :: Anagrams -> String -> [String]
 lookupAnagram anagrams w = M.findWithDefault [] (sort w) anagrams
