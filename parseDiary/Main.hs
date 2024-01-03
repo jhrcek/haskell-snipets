@@ -15,7 +15,7 @@ toCsvLine year Day{..} =
 main :: IO ()
 main = do
     putStrLn "'date', 'words added', 'review count', 'x count', 'o count'"
-    for_ [2013 .. 2022] $ \year -> do
+    for_ [2013 .. 2023] $ \year -> do
         eitherDayList <- getData year
         case eitherDayList of
             Right dl -> do
